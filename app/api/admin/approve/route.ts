@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(request: Request) {
     const session = await getSession();
     if (!session || session.role !== 'admin') {
