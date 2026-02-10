@@ -1,7 +1,6 @@
 'use client';
 
 import styles from '../app/dashboard/dashboard.module.css';
-
 export default function UserDashboard({ session }: { session: { email: string; role: string } }) {
     return (
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
@@ -26,6 +25,7 @@ export default function UserDashboard({ session }: { session: { email: string; r
                 <h2 style={{ marginBottom: '1rem' }}>Latest Activity</h2>
                 <p style={{ color: '#777' }}>No recent activity to show.</p>
             </div>
+
         </div>
     );
 }

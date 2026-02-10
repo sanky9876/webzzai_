@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import styles from '../app/dashboard/dashboard.module.css';
 
+
 interface User {
     id: number;
     email: string;
@@ -11,7 +12,10 @@ interface User {
     created_at: string;
 }
 
+import VideoSummarizer from './VideoSummarizer';
+
 export default function AdminDashboard() {
+    // ... existing state and logic ...
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -85,7 +89,6 @@ export default function AdminDashboard() {
                     <div className={styles.statValue}>{pendingCount}</div>
                 </div>
             </div>
-
             <div className={styles.tableContainer}>
                 <table className={styles.table}>
                     <thead>
@@ -144,6 +147,7 @@ export default function AdminDashboard() {
                     </tbody>
                 </table>
             </div>
-        </div>
+
+        </div >
     );
 }
