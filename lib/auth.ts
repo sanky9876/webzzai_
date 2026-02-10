@@ -5,6 +5,11 @@ import { NextRequest, NextResponse } from 'next/server';
 const secretKey = process.env.SESSION_SECRET || 'secret';
 const key = new TextEncoder().encode(secretKey);
 
+export interface SessionPayload extends JWTPayload {
+    email: string;
+    role: string;
+}
+
 export async function encrypt(payload: unknown) {
     return await new SignJWT(payload as JWTPayload)
         .setProtectedHeader({ alg: 'HS256' })
@@ -13,14 +18,14 @@ export async function encrypt(payload: unknown) {
         .sign(key);
 }
 
-export async function decrypt(input: string): Promise<JWTPayload> {
+export async function decrypt(input: string): Promise<SessionPayload> {
     const { payload } = await jwtVerify(input, key, {
         algorithms: ['HS256'],
     });
-    return payload;
+    return payload as SessionPayload;
 }
 
-export async function getSession() {
+export async function getSession(): Promise<SessionPayload | null> {
     const session = (await cookies()).get('session')?.value;
     if (!session) return null;
     try {
