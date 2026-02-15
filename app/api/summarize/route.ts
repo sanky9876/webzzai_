@@ -1,8 +1,95 @@
 import { NextResponse } from 'next/server';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Innertube, UniversalCache } from 'youtubei.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+// Helper to fetch transcript using multiple strategies
+async function fetchTranscript(videoId: string): Promise<string> {
+    let errors: string[] = [];
+
+    // Strategy 1: youtube-transcript (Lightweight, often works)
+    try {
+        console.log(`[Transcript] Strategy 1: youtube-transcript for ${videoId}`);
+        const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+        const text = transcriptItems.map(item => item.text).join(' ');
+        if (text.length > 0) return text;
+    } catch (e: any) {
+        console.warn(`[Transcript] Strategy 1 failed: ${e.message}`);
+        errors.push(`Strategy 1: ${e.message}`);
+    }
+
+    // Strategy 2: youtubei.js (Robust client emulation)
+    try {
+        console.log(`[Transcript] Strategy 2: youtubei.js for ${videoId}`);
+        const yt = await Innertube.create({ cache: new UniversalCache(false), generate_session_locally: true });
+        const info = await yt.getInfo(videoId);
+        const transcriptData = await info.getTranscript();
+
+        if (transcriptData && transcriptData.transcript) { // Check if transcript data exists
+            const text = transcriptData.transcript.content?.body?.initial_segments.map((segment: any) => segment.snippet.text).join(' ') || '';
+            if (text.length > 0) return text;
+        }
+
+    } catch (e: any) {
+        console.warn(`[Transcript] Strategy 2 failed: ${e.message}`);
+        errors.push(`Strategy 2: ${e.message}`);
+    }
+
+    // Strategy 3: Python Fallback (Existing Logic)
+    try {
+        console.log(`[Transcript] Strategy 3: Python Fallback for ${videoId}`);
+        if (process.env.VERCEL) {
+            // Production: Use Python Serverless Function
+            const baseUrl = `https://${process.env.VERCEL_URL}`;
+            const transcriptUrl = `${baseUrl}/api/transcript?videoId=${videoId}`;
+            const transcriptRes = await fetch(transcriptUrl);
+            if (!transcriptRes.ok) {
+                const errorData = await transcriptRes.json().catch(() => ({}));
+                throw new Error(errorData.error || `Serverless function failed with status ${transcriptRes.status}`);
+            }
+            const data = await transcriptRes.json();
+            if (data.transcript) return data.transcript;
+
+        } else {
+            // Local: Use Python Script via child_process
+            const { spawn } = await import('child_process');
+            const path = await import('path');
+            const scriptPath = path.join(process.cwd(), 'scripts', 'get_transcript.py');
+
+            const transcriptText = await new Promise<string>((resolve, reject) => {
+                const pythonProcess = spawn('python', [scriptPath, videoId]);
+                let dataString = '';
+                let errorString = '';
+
+                pythonProcess.stdout.on('data', (data) => dataString += data.toString());
+                pythonProcess.stderr.on('data', (data) => errorString += data.toString());
+
+                pythonProcess.on('close', (code) => {
+                    if (code !== 0) {
+                        reject(new Error(errorString || 'Python script exited with error'));
+                        return;
+                    }
+                    try {
+                        const result = JSON.parse(dataString);
+                        if (result.error) reject(new Error(result.error));
+                        else resolve(result.transcript || '');
+                    } catch (e) {
+                        reject(new Error('Failed to parse Python script output: ' + dataString));
+                    }
+                });
+            });
+            if (transcriptText.length > 0) return transcriptText;
+        }
+
+    } catch (e: any) {
+        console.warn(`[Transcript] Strategy 3 failed: ${e.message}`);
+        errors.push(`Strategy 3: ${e.message}`);
+    }
+
+    throw new Error(`All transcript fetching strategies failed. Details: ${JSON.stringify(errors)}`);
+}
 
 export async function POST(req: Request) {
     try {
@@ -13,7 +100,6 @@ export async function POST(req: Request) {
         }
 
         if (!process.env.GEMINI_API_KEY) {
-            console.error('Gemini API key is missing in environment variables');
             return NextResponse.json({ error: 'Gemini API key is not configured' }, { status: 500 });
         }
 
@@ -25,83 +111,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
         }
 
-        // Fetch Transcript using Python script (as fallback for JS library issues)
-        // Hybrid approach: Vercel Serverless Function (Prod) vs Child Process (Local)
         let transcriptText = '';
         try {
-            if (process.env.VERCEL) {
-                // Production: Use Python Serverless Function via internal fetch
-                // VERCEL_URL is provided by Vercel environment
-                const baseUrl = `https://${process.env.VERCEL_URL}`;
-                const transcriptUrl = `${baseUrl}/api/transcript?videoId=${videoId}`;
-                console.log('Fetching transcript from:', transcriptUrl);
-
-                const transcriptRes = await fetch(transcriptUrl);
-                if (!transcriptRes.ok) {
-                    const errorData = await transcriptRes.json().catch(() => ({}));
-                    throw new Error(errorData.error || `Serverless function failed with status ${transcriptRes.status}`);
-                }
-
-                const data = await transcriptRes.json();
-                transcriptText = data.transcript || '';
-
-            } else {
-                // Local Development: Use Python Script via child_process spawn
-                const { spawn } = await import('child_process');
-                const path = await import('path');
-
-                const scriptPath = path.join(process.cwd(), 'scripts', 'get_transcript.py');
-
-                transcriptText = await new Promise<string>((resolve, reject) => {
-                    const pythonProcess = spawn('python', [scriptPath, videoId]);
-                    let dataString = '';
-                    let errorString = '';
-
-                    pythonProcess.stdout.on('data', (data) => {
-                        dataString += data.toString();
-                    });
-
-                    pythonProcess.stderr.on('data', (data) => {
-                        errorString += data.toString();
-                    });
-
-                    pythonProcess.on('close', (code) => {
-                        if (code !== 0) {
-                            reject(new Error(errorString || 'Python script exited with error'));
-                            return;
-                        }
-                        try {
-                            const result = JSON.parse(dataString);
-                            if (result.error) {
-                                reject(new Error(result.error));
-                            } else {
-                                resolve(result.transcript || '');
-                            }
-                        } catch (e) {
-                            reject(new Error('Failed to parse Python script output: ' + dataString));
-                        }
-                    });
-                });
-            }
-
-            console.log('Transcript fetched, length:', transcriptText.length);
-
+            transcriptText = await fetchTranscript(videoId);
+            console.log('Transcript fetched successfully, length:', transcriptText.length);
         } catch (error) {
             console.error("Transcript Error:", error);
-            // Fallback error message
             return NextResponse.json({ error: 'Could not retrieve transcript. The video might not have captions enabled or is restricted.' }, { status: 400 });
         }
 
-        // Limit transcript length to avoid token limits (rudimentary check)
-        // defined limit 30000 characters ~ 7000-8000 tokens, well within Gemini 1.5 Flash limit
+        // Limit transcript length
         const truncatedTranscript = transcriptText.substring(0, 30000);
 
-        if (transcriptText.length === 0) {
-            return NextResponse.json({ error: 'No transcript found for this video.' }, { status: 400 });
-        }
-
         // Generate Summary with Gemini
-        // Using gemini-flash-latest for best availability
         const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
         const prompt = `
       You are an expert AI study assistant. 
