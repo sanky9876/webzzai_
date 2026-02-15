@@ -115,9 +115,9 @@ export async function POST(req: Request) {
         try {
             transcriptText = await fetchTranscript(videoId);
             console.log('Transcript fetched successfully, length:', transcriptText.length);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Transcript Error:", error);
-            return NextResponse.json({ error: 'Could not retrieve transcript. The video might not have captions enabled or is restricted.' }, { status: 400 });
+            return NextResponse.json({ error: `Transcript fetch failed. Details: ${error.message || String(error)}` }, { status: 400 });
         }
 
         // Limit transcript length
