@@ -6,7 +6,7 @@ import { Innertube, UniversalCache } from 'youtubei.js';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // Helper to fetch transcript using multiple strategies
-async function fetchTranscript(videoId: string): Promise<string> {
+async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promise<string> {
     let errors: string[] = [];
 
     // Strategy 1: youtube-transcript (Lightweight, often works)
@@ -58,7 +58,14 @@ async function fetchTranscript(videoId: string): Promise<string> {
             const transcriptUrl = `${baseUrl}/api/transcript?videoId=${videoId}`;
             console.log(`Fetching from Python URL: ${transcriptUrl}`);
 
-            const transcriptRes = await fetch(transcriptUrl);
+            // Forward headers to bypass Vercel protection (401)
+            const headers = new Headers();
+            if (requestHeaders) {
+                if (requestHeaders.get('cookie')) headers.set('cookie', requestHeaders.get('cookie')!);
+                if (requestHeaders.get('authorization')) headers.set('authorization', requestHeaders.get('authorization')!);
+            }
+
+            const transcriptRes = await fetch(transcriptUrl, { headers });
             if (!transcriptRes.ok) {
                 const errorData = await transcriptRes.json().catch(() => ({}));
                 throw new Error(errorData.error || `Serverless function failed with status ${transcriptRes.status}`);
@@ -127,7 +134,7 @@ export async function POST(req: Request) {
 
         let transcriptText = '';
         try {
-            transcriptText = await fetchTranscript(videoId);
+            transcriptText = await fetchTranscript(videoId, req.headers);
             console.log('Transcript fetched successfully, length:', transcriptText.length);
         } catch (error: any) {
             console.error("Transcript Error:", error);
