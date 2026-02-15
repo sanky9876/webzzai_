@@ -202,8 +202,11 @@ export async function POST(req: Request) {
         const { videoUrl } = await req.json();
 
         if (!videoUrl) {
+            console.log("API Route Version: v2.0 (With Manual Strategy)");
             return NextResponse.json({ error: 'Video URL is required' }, { status: 400 });
         }
+
+        console.log(`[Transcript] Request received for: ${videoUrl} (Version: v2.0)`);
 
         if (!process.env.GEMINI_API_KEY) {
             return NextResponse.json({ error: 'Gemini API key is not configured' }, { status: 500 });
