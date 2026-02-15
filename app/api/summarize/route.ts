@@ -43,7 +43,7 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
             });
 
             // Extract caption tracks manually
-            const captions = playerResponse.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+            const captions = (playerResponse.captions as any)?.playerCaptionsTracklistRenderer?.captionTracks;
 
             if (captions && captions.length > 0) {
                 console.log(`[Transcript] Strategy 2 (${clientType}): Found ${captions.length} tracks`);
@@ -52,10 +52,21 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
 
                 if (enTrack && enTrack.baseUrl) {
                     console.log(`[Transcript] Strategy 2 (${clientType}): Fetching transcript from ${enTrack.baseUrl}`);
-                    const transcriptRes = await fetch(enTrack.baseUrl);
+                    const transcriptRes = await fetch(enTrack.baseUrl, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+                        }
+                    });
+
+                    if (!transcriptRes.ok) {
+                        console.warn(`[Transcript] Strategy 2 (${clientType}): Failed to fetch XML with status ${transcriptRes.status}`);
+                        continue;
+                    }
+
                     const transcriptXml = await transcriptRes.text();
 
                     // Simple XML parsing to extract text
+                    // Handles <text ...>content</text>
                     const matches = transcriptXml.matchAll(/<text[^>]*>(.*?)<\/text>/g);
                     let fullText = "";
                     for (const match of matches) {
