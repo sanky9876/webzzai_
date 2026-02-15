@@ -30,9 +30,16 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
                 'Accept-Language': 'en-US,en;q=0.9',
+                'Cookie': 'CONSENT=YES+cb.20210328-17-p0.en+FX+417; SOCS=CAISAhAB' // Attempt to bypass consent page
             }
         });
         const html = await htmlRes.text();
+
+        // Log title for debugging
+        const titleMatch = html.match(/<title>(.*?)<\/title>/);
+        if (titleMatch) {
+            console.log(`[Transcript] Strategy 1.5 HTML Title: ${titleMatch[1]}`);
+        }
 
         const captionTracksRegex = /"captionTracks":\s*(\[.*?\])/;
         const match = html.match(captionTracksRegex);
@@ -183,6 +190,8 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
             if (requestHeaders) {
                 if (requestHeaders.get('cookie')) headers.set('cookie', requestHeaders.get('cookie')!);
                 if (requestHeaders.get('authorization')) headers.set('authorization', requestHeaders.get('authorization')!);
+                // Forward Vercel protection bypass if present
+                if (requestHeaders.get('x-vercel-protection-bypass')) headers.set('x-vercel-protection-bypass', requestHeaders.get('x-vercel-protection-bypass')!);
             }
 
             const transcriptRes = await fetch(transcriptUrl, { headers });
