@@ -3,7 +3,7 @@ async function test() {
         const res = await fetch('http://localhost:3000/api/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoUrl: 'https://www.youtube.com/watch?v=M7lc1UVf-VE' })
+            body: JSON.stringify({ videoUrl: 'https://www.youtube.com/watch?v=DYDs_Inzkz4' })
         });
 
         const data = await res.json();
