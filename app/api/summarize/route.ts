@@ -22,6 +22,49 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
         errors.push(`Strategy 1: ${e.message}`);
     }
 
+    // Strategy 1.5: Manual HTML Parsing (Most robust for basic extraction)
+    try {
+        console.log(`[Transcript] Strategy 1.5: Manual HTML Parsing for ${videoId}`);
+        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        const htmlRes = await fetch(videoUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            }
+        });
+        const html = await htmlRes.text();
+
+        const captionTracksRegex = /"captionTracks":\s*(\[.*?\])/;
+        const match = html.match(captionTracksRegex);
+
+        if (match) {
+            const captionTracks = JSON.parse(match[1]);
+            const enTrack = captionTracks.find((t: any) => t.languageCode === 'en') || captionTracks[0];
+
+            if (enTrack && enTrack.baseUrl) {
+                console.log(`[Transcript] Strategy 1.5: Found track, fetching from ${enTrack.baseUrl}`);
+                const transcriptRes = await fetch(enTrack.baseUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                    }
+                });
+                const transcriptXml = await transcriptRes.text();
+                const matches = transcriptXml.matchAll(/<text[^>]*>(.*?)<\/text>/g);
+                let fullText = "";
+                for (const match of matches) {
+                    if (match[1]) {
+                        fullText += match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") + " ";
+                    }
+                }
+                const cleanText = fullText.trim();
+                if (cleanText.length > 0) return cleanText;
+            }
+        }
+    } catch (e: any) {
+        console.warn(`[Transcript] Strategy 1.5 failed: ${e.message}`);
+        errors.push(`Strategy 1.5: ${e.message}`);
+    }
+
     // Strategy 2: youtubei.js (Robust client emulation)
     // Attempt with different clients
     const clients = ['WEB', 'ANDROID', 'TV_EMBEDDED'] as const;
@@ -79,7 +122,11 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
                     }
 
                     if (fullText.length > 0) return fullText.trim();
+                } else {
+                    errors.push(`Strategy 2 (${clientType}): No English track URL found`);
                 }
+            } else {
+                errors.push(`Strategy 2 (${clientType}): No caption tracks found in player response`);
             }
         } catch (e: any) {
             console.warn(`[Transcript] Strategy 2 (${clientType}) failed: ${e.message}`);
