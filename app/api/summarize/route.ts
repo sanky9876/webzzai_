@@ -35,13 +35,40 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
                 client_type: clientType as any,
             });
 
-            // Verify if we can get info
-            const info = await yt.getInfo(videoId);
-            const transcriptData = await info.getTranscript();
+            // Use Raw Player Fetch to bypass parsing bugs (especially in Android)
+            const playerResponse = await yt.actions.execute('/player', {
+                videoId: videoId,
+                client: clientType,
+                parse: true
+            });
 
-            if (transcriptData && transcriptData.transcript) {
-                const text = transcriptData.transcript.content?.body?.initial_segments.map((segment: any) => segment.snippet.text).join(' ') || '';
-                if (text.length > 0) return text;
+            // Extract caption tracks manually
+            const captions = playerResponse.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+
+            if (captions && captions.length > 0) {
+                console.log(`[Transcript] Strategy 2 (${clientType}): Found ${captions.length} tracks`);
+                // Find English track
+                const enTrack = captions.find((t: any) => t.languageCode === 'en') || captions[0];
+
+                if (enTrack && enTrack.baseUrl) {
+                    console.log(`[Transcript] Strategy 2 (${clientType}): Fetching transcript from ${enTrack.baseUrl}`);
+                    const transcriptRes = await fetch(enTrack.baseUrl);
+                    const transcriptXml = await transcriptRes.text();
+
+                    // Simple XML parsing to extract text
+                    const matches = transcriptXml.matchAll(/<text[^>]*>(.*?)<\/text>/g);
+                    let fullText = "";
+                    for (const match of matches) {
+                        try {
+                            let line = match[1];
+                            // Decode basic entities
+                            line = line.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+                            fullText += line + " ";
+                        } catch (e) { }
+                    }
+
+                    if (fullText.length > 0) return fullText.trim();
+                }
             }
         } catch (e: any) {
             console.warn(`[Transcript] Strategy 2 (${clientType}) failed: ${e.message}`);
