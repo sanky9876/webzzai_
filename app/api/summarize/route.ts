@@ -12,7 +12,9 @@ async function fetchTranscript(videoId: string): Promise<string> {
     // Strategy 1: youtube-transcript (Lightweight, often works)
     try {
         console.log(`[Transcript] Strategy 1: youtube-transcript for ${videoId}`);
-        const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+        const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId, {
+            lang: 'en' // Explicitly request English
+        });
         const text = transcriptItems.map(item => item.text).join(' ');
         if (text.length > 0) return text;
     } catch (e: any) {
@@ -21,20 +23,30 @@ async function fetchTranscript(videoId: string): Promise<string> {
     }
 
     // Strategy 2: youtubei.js (Robust client emulation)
-    try {
-        console.log(`[Transcript] Strategy 2: youtubei.js for ${videoId}`);
-        const yt = await Innertube.create({ cache: new UniversalCache(false), generate_session_locally: true });
-        const info = await yt.getInfo(videoId);
-        const transcriptData = await info.getTranscript();
+    // Attempt with different clients
+    const clients = ['WEB', 'ANDROID', 'TV_EMBEDDED'] as const;
 
-        if (transcriptData && transcriptData.transcript) { // Check if transcript data exists
-            const text = transcriptData.transcript.content?.body?.initial_segments.map((segment: any) => segment.snippet.text).join(' ') || '';
-            if (text.length > 0) return text;
+    for (const clientType of clients) {
+        try {
+            console.log(`[Transcript] Strategy 2 (${clientType}): youtubei.js for ${videoId}`);
+            const yt = await Innertube.create({
+                cache: new UniversalCache(false),
+                generate_session_locally: true,
+                client_type: clientType as any,
+            });
+
+            // Verify if we can get info
+            const info = await yt.getInfo(videoId);
+            const transcriptData = await info.getTranscript();
+
+            if (transcriptData && transcriptData.transcript) {
+                const text = transcriptData.transcript.content?.body?.initial_segments.map((segment: any) => segment.snippet.text).join(' ') || '';
+                if (text.length > 0) return text;
+            }
+        } catch (e: any) {
+            console.warn(`[Transcript] Strategy 2 (${clientType}) failed: ${e.message}`);
+            errors.push(`Strategy 2 (${clientType}): ${e.message}`);
         }
-
-    } catch (e: any) {
-        console.warn(`[Transcript] Strategy 2 failed: ${e.message}`);
-        errors.push(`Strategy 2: ${e.message}`);
     }
 
     // Strategy 3: Python Fallback (Existing Logic)
@@ -44,6 +56,8 @@ async function fetchTranscript(videoId: string): Promise<string> {
             // Production: Use Python Serverless Function
             const baseUrl = `https://${process.env.VERCEL_URL}`;
             const transcriptUrl = `${baseUrl}/api/transcript?videoId=${videoId}`;
+            console.log(`Fetching from Python URL: ${transcriptUrl}`);
+
             const transcriptRes = await fetch(transcriptUrl);
             if (!transcriptRes.ok) {
                 const errorData = await transcriptRes.json().catch(() => ({}));
