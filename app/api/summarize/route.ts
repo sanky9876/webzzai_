@@ -38,11 +38,12 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
         const match = html.match(captionTracksRegex);
 
         if (match) {
+            // ... existing match logic ...
             const captionTracks = JSON.parse(match[1]);
             const enTrack = captionTracks.find((t: any) => t.languageCode === 'en') || captionTracks[0];
 
             if (enTrack && enTrack.baseUrl) {
-                console.log(`[Transcript] Strategy 1.5: Found track, fetching from ${enTrack.baseUrl}`);
+                // ... existing fetch ...
                 const transcriptRes = await fetch(enTrack.baseUrl, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
@@ -60,6 +61,37 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
                 if (cleanText.length > 0) return cleanText;
             }
         } else {
+            // Try explicit ytInitialPlayerResponse
+            const playerResponseRegex = /ytInitialPlayerResponse\s*=\s*({.+?});/;
+            const playerMatch = html.match(playerResponseRegex);
+            if (playerMatch) {
+                console.log(`[Transcript] Strategy 1.5: Found ytInitialPlayerResponse`);
+                try {
+                    const playerResponse = JSON.parse(playerMatch[1]);
+                    const captions = (playerResponse.captions as any)?.playerCaptionsTracklistRenderer?.captionTracks;
+                    if (captions) {
+                        const enTrack = captions.find((t: any) => t.languageCode === 'en') || captions[0];
+                        if (enTrack && enTrack.baseUrl) {
+                            console.log(`[Transcript] Strategy 1.5: Found track in playerResponse, fetching...`);
+                            const transcriptRes = await fetch(enTrack.baseUrl, {
+                                headers: {
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
+                                }
+                            });
+                            const transcriptXml = await transcriptRes.text();
+                            const matches = transcriptXml.matchAll(/<text[^>]*>(.*?)<\/text>/g);
+                            let fullText = "";
+                            for (const match of matches) {
+                                if (match[1]) fullText += match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") + " ";
+                            }
+                            if (fullText.trim().length > 0) return fullText.trim();
+                        }
+                    }
+                } catch (e) {
+                    console.log(`[Transcript] Strategy 1.5 playerResponse parse error: ${e}`);
+                }
+            }
+
             console.log(`[Transcript] Strategy 1.5 failed: captionTracks not found. HTML Preview: ${html.substring(0, 200)}`);
             errors.push(`Strategy 1.5: HTML Regex mismatch (IP likely blocked). content-preview: ${html.substring(0, 100)}...`);
         }
