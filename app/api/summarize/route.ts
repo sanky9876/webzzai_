@@ -59,6 +59,9 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
                 const cleanText = fullText.trim();
                 if (cleanText.length > 0) return cleanText;
             }
+        } else {
+            console.log(`[Transcript] Strategy 1.5 failed: captionTracks not found. HTML Preview: ${html.substring(0, 200)}`);
+            errors.push(`Strategy 1.5: HTML Regex mismatch (IP likely blocked). content-preview: ${html.substring(0, 100)}...`);
         }
     } catch (e: any) {
         console.warn(`[Transcript] Strategy 1.5 failed: ${e.message}`);
