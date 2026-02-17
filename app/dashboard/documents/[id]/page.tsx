@@ -45,9 +45,10 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
             const data = await res.json();
             const botMessage = { role: 'assistant' as const, content: data.answer };
             setMessages(prev => [...prev, botMessage]);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error answering that.' }]);
+            const errorMessage = error.message || 'Sorry, I encountered an error answering that.';
+            setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errorMessage}` }]);
         } finally {
             setLoading(false);
         }

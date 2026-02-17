@@ -1,8 +1,15 @@
 
 import Groq from 'groq-sdk';
 
+const apiKey = process.env.GROQ_API_KEY;
+if (!apiKey) {
+    console.error('GROQ_API_KEY is missing in environment variables!');
+} else {
+    console.log('GROQ_API_KEY is present.');
+}
+
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
+    apiKey: apiKey,
 });
 
 export async function getAnswer(context: string, question: string) {

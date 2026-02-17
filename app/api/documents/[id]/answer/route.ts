@@ -64,7 +64,8 @@ export async function POST(
     try {
         const answer = await getAnswer(context, question);
         return NextResponse.json({ answer });
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to generate answer' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Error in /api/documents/[id]/answer:', error);
+        return NextResponse.json({ error: `Failed to generate answer: ${error.message}` }, { status: 500 });
     }
 }
