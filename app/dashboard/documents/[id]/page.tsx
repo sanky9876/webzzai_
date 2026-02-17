@@ -40,7 +40,10 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
                 body: JSON.stringify({ question: userMessage.content }),
             });
 
-            if (!res.ok) throw new Error('Failed to get answer');
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP Error ${res.status}`);
+            }
 
             const data = await res.json();
             const botMessage = { role: 'assistant' as const, content: data.answer };
@@ -48,7 +51,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
         } catch (error: any) {
             console.error(error);
             const errorMessage = error.message || 'Sorry, I encountered an error answering that.';
-            setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errorMessage}` }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: `Server Error: ${errorMessage}` }]);
         } finally {
             setLoading(false);
         }
@@ -58,7 +61,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
         <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 100px)' }}>
             <div className={styles.header}>
                 <h1 className={styles.title}>Document Chat</h1>
-                <p className={styles.subtitle}>Ask questions about this document.</p>
+                <p className={styles.subtitle}>Ask questions about this document. (v1.1 Debug)</p>
             </div>
 
             <div style={{
