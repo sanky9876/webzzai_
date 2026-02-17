@@ -29,6 +29,9 @@ export default function DashboardLayout({
                     <Link href="/dashboard/summarizer" className={`${styles.navItem} ${pathname === '/dashboard/summarizer' ? styles.active : ''}`}>
                         AI Summarizer
                     </Link>
+                    <Link href="/dashboard/documents" className={`${styles.navItem} ${pathname.startsWith('/dashboard/documents') ? styles.active : ''}`}>
+                        Documents
+                    </Link>
                     {/* Add more links here if needed */}
                 </nav>
                 <button onClick={handleLogout} className={styles.logout}>
