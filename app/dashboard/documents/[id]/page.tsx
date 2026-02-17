@@ -34,10 +34,10 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
         setLoading(true);
 
         try {
-            const res = await fetch(`/api/documents/${id}/answer`, {
+            const res = await fetch(`/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: userMessage.content }),
+                body: JSON.stringify({ documentId: id, question: userMessage.content }),
             });
 
             if (!res.ok) {
