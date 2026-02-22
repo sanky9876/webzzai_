@@ -1,78 +1,101 @@
-
 import Groq from 'groq-sdk';
 
-const getGroqClient = () => {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-        throw new Error('GROQ_API_KEY is missing in environment variables!');
-    }
-    return new Groq({ apiKey });
-};
+const groqApiKey = process.env.GROQ_API_KEY;
+const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+
+const groq = groqApiKey ? new Groq({ apiKey: groqApiKey }) : null;
 
 export async function getAnswer(context: string, question: string) {
+    if (!groq) {
+        throw new Error("GROQ_API_KEY is missing.");
+    }
     try {
-        const groq = getGroqClient();
         const chatCompletion = await groq.chat.completions.create({
             messages: [
                 {
                     role: 'system',
-                    content: `You are a helpful assistant. Use the following context to answer the user's question. If the answer is not in the context, say you don't know.\n\nContext:\n${context}`
+                    content: `You are a helpful AI assistant. Use the following context to answer the user's question accurately.\n\nContext:\n${context}`
                 },
                 {
                     role: 'user',
-                    content: question,
-                },
+                    content: question
+                }
             ],
-            model: 'llama-3.3-70b-versatile', // or 'mixtral-8x7b-32768'
-            temperature: 0.5,
-            max_tokens: 1024,
+            model: 'llama-3.3-70b-versatile',
         });
 
-        return chatCompletion.choices[0]?.message?.content || "I couldn't generate an answer.";
+        return chatCompletion.choices[0].message.content;
     } catch (error) {
-        console.error("LLM Error:", error);
+        console.error('Groq Error:', error);
         throw new Error("Failed to get answer from LLM.");
     }
 }
 
 export async function generateSummary(transcript: string) {
-    try {
-        const groq = getGroqClient();
-        const chatCompletion = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: 'system',
-                    content: `You are an expert AI study assistant. Analyze the provided YouTube video transcript and generate a comprehensive summary and structured study notes.
+    const prompt = `You are an expert AI study assistant. Analyze the provided YouTube video transcript and generate a comprehensive summary and structured study notes.
                     
                     Output Format:
-                    # Video Title (Infer if possible, else "Video Summary")
+                    # Video Summary
                     
                     ## Summary
                     [Concise summary of the video content]
                     
-                    ## Key Concepts
-                    - [Concept 1]: [Explanation]
-                    - [Concept 2]: [Explanation]
+                    ## Key Takeaways
+                    - [Key point 1]
+                    - [Key point 2]
+                    ...
                     
-                    ## Study Notes
-                    [Detailed bullet points or numbered list]
+                    ## Detailed Notes
+                    ### [Theme/Topic 1]
+                    - [Detail/Explanation]
+                    - [Example/Analogy]
                     
-                    ## Quiz
-                    [3 short questions to test understanding]`
-                },
-                {
-                    role: 'user',
-                    content: `Transcript:\n${transcript}`,
-                },
-            ],
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.5,
-            max_tokens: 2048,
-        });
+                    ### [Theme/Topic 2]
+                    - [Detail/Explanation]
+                    ...
+                    
+                    ## Glossary (Optional)
+                    - **[Term]**: [Definition]
+                    
+                    Transcript:
+                    ${transcript}`;
 
-        return chatCompletion.choices[0]?.message?.content || "I couldn't generate a summary.";
-    } catch (error) {
-        console.error("Groq Summary Error:", error);
-        throw new Error("Failed to generate summary from Groq.");
+    // Priority 1: Groq (Fastest)
+    if (groq) {
+        try {
+            console.log("[LLM] Attempting summary with Groq...");
+            const completion = await groq.chat.completions.create({
+                messages: [{ role: 'user', content: prompt }],
+                model: 'llama-3.3-70b-versatile',
+                temperature: 0.5,
+            });
+            return completion.choices[0].message.content;
+        } catch (e) {
+            console.warn("[LLM] Groq failed, falling back if possible:", e);
+        }
     }
+
+    // Priority 2: OpenRouter (Robust Fallback)
+    if (openRouterApiKey) {
+        try {
+            console.log("[LLM] Attempting summary with OpenRouter...");
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${openRouterApiKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "google/gemini-flash-1.5-exp",
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+            const data = await response.json();
+            return data.choices?.[0]?.message?.content || "No response from OpenRouter";
+        } catch (e) {
+            console.error("[LLM] OpenRouter failed:", e);
+        }
+    }
+
+    throw new Error("No LLM provider available. Please check your API keys.");
 }
