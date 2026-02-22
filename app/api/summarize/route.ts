@@ -8,90 +8,76 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
     const fetchStartTime = Date.now();
     let errors: string[] = [];
 
-    // Strategy 1: youtube-transcript (FASTEST)
-    try {
-        console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Strategy 1: youtube-transcript`);
+    // Helper for individual strategy execution
+    const runStrategy = async (name: string, fn: () => Promise<string>): Promise<string> => {
+        try {
+            console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Starting ${name}`);
+            const result = await fn();
+            console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] ${name} SUCCEEDED`);
+            return result;
+        } catch (e: any) {
+            const msg = `[${Date.now() - fetchStartTime}ms] ${name} FAILED: ${e.message}`;
+            console.warn(msg);
+            errors.push(msg);
+            throw e;
+        }
+    };
+
+    // Define the most reliable strategies
+    const strategy1 = () => runStrategy("Strategy 1 (youtube-transcript)", async () => {
         const transcriptItems = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' });
         const text = transcriptItems.map(item => item.text).join(' ');
-        if (text.length > 0) return text;
-    } catch (e: any) {
-        errors.push(`Strategy 1: ${e.message}`);
-    }
+        if (!text || text.length === 0) throw new Error("Empty transcript returned");
+        return text;
+    });
 
-    // Strategy 2: youtubei.js Client Rotation (Android -> iOS -> TV -> Web)
-    const clientTypes = ['ANDROID', 'IOS', 'TV', 'WEB', 'MWEB'] as const;
-    for (const client of clientTypes) {
-        try {
-            console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Strategy 2: Innertube (${client})`);
-            const yt = await Innertube.create({ generate_session_locally: true, client_type: client as any });
-
-            // Try to use the high-level getInfo/getTranscript first (very robust)
-            try {
-                const info = await yt.getInfo(videoId);
-                const transcriptData = await info.getTranscript();
-                const segments = (transcriptData as any)?.transcript?.content?.body?.initial_segments;
-                if (segments && segments.length > 0) {
-                    const text = segments.map((s: any) => s.snippet.text).join(' ');
-                    if (text.trim().length > 0) return text.trim();
-                }
-            } catch (innerE) {
-                // Fallback to raw player fetch if high-level fails
-                const playerResponse = await yt.actions.execute('/player', { videoId, parse: true });
-                const captions = (playerResponse.captions as any)?.playerCaptionsTracklistRenderer?.captionTracks;
-                if (captions && captions.length > 0) {
-                    // Try English, then any available
-                    const targetTrack = captions.find((t: any) => t.languageCode === 'en') || captions[0];
-                    const transcriptRes = await fetch(targetTrack.baseUrl);
-                    const transcriptXml = await transcriptRes.text();
-                    const matches = transcriptXml.matchAll(/<text[^>]*>(.*?)<\/text>/g);
-                    let fullText = "";
-                    for (const match of matches) {
-                        if (match[1]) fullText += match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") + " ";
-                    }
-                    if (fullText.trim().length > 0) return fullText.trim();
-                }
-            }
-        } catch (e: any) {
-            errors.push(`Strategy 2 (${client}): ${e.message}`);
-        }
-    }
-
-    // Strategy 3: Python Fallback (Reliable environment-side)
-    try {
-        console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Strategy 3: Python`);
+    const strategy2 = () => runStrategy("Strategy 2 (Python)", async () => {
         const { spawn } = require('child_process');
         const path = require('path');
         const scriptPath = path.join(process.cwd(), 'scripts', 'get_transcript.py');
 
-        const pythonProcess = spawn('python', [scriptPath, videoId]);
-        let scriptOutput = '';
-        let scriptError = '';
+        return new Promise<string>((resolve, reject) => {
+            const pythonProcess = spawn('python', [scriptPath, videoId]);
+            let scriptOutput = '';
+            let scriptError = '';
 
-        await new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
                 pythonProcess.kill();
-                reject(new Error('Python script timed out'));
-            }, 30000); // 30s
+                reject(new Error('Timed out'));
+            }, 15000); // Internal Python timeout
 
             pythonProcess.stdout.on('data', (data: any) => { scriptOutput += data.toString(); });
             pythonProcess.stderr.on('data', (data: any) => { scriptError += data.toString(); });
             pythonProcess.on('close', (code: any) => {
                 clearTimeout(timeout);
-                if (code !== 0) reject(new Error(`Exit code ${code}. Error: ${scriptError}`));
-                else resolve(null);
+                if (code !== 0) {
+                    reject(new Error(`Exit code ${code}. Error: ${scriptError}`));
+                } else {
+                    try {
+                        const result = JSON.parse(scriptOutput);
+                        if (result.transcript) resolve(result.transcript);
+                        else reject(new Error(result.error || "No transcript in output"));
+                    } catch (e) {
+                        reject(new Error(`Parse error: ${scriptOutput.substring(0, 100)}`));
+                    }
+                }
             });
         });
+    });
 
-        const result = JSON.parse(scriptOutput);
-        if (result.transcript) return result.transcript;
-        if (result.error) errors.push(`Strategy 3: ${result.error}`);
-    } catch (e: any) {
-        errors.push(`Strategy 3: ${e.message}`);
-    }
+    const strategy3 = () => runStrategy("Strategy 3 (Innertube-ANDROID)", async () => {
+        const yt = await Innertube.create({ generate_session_locally: true, client_type: 'ANDROID' as any });
+        const info = await yt.getInfo(videoId);
+        const transcriptData = await info.getTranscript();
+        const segments = (transcriptData as any)?.transcript?.content?.body?.initial_segments;
+        if (segments && segments.length > 0) {
+            return segments.map((s: any) => s.snippet.text).join(' ');
+        }
+        throw new Error("No segments found");
+    });
 
-    // Strategy 4: Final Hand-Rolled HTML Parsing (Desperation fallback)
-    try {
-        console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Strategy 4: Hand-Rolled HTML`);
+    // Strategy 4: Raw HTML Parsing (Fast enough to run in group)
+    const strategy4 = () => runStrategy("Strategy 4 (Manual HTML)", async () => {
         const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
         const htmlRes = await fetch(videoUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36' }
@@ -107,16 +93,45 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
                 const transcriptXml = await transcriptRes.text();
                 const matches = transcriptXml.matchAll(/<text[^>]*>(.*?)<\/text>/g);
                 let fullText = "";
-                for (const match of matches) if (match[1]) fullText += match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") + " ";
+                for (const match of matches) {
+                    if (match[1]) fullText += match[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") + " ";
+                }
                 if (fullText.trim().length > 0) return fullText.trim();
             }
         }
-        errors.push("Strategy 4: No caption tracks found in raw HTML source");
-    } catch (e: any) {
-        errors.push(`Strategy 4: ${e.message}`);
-    }
+        throw new Error("No tracks in HTML");
+    });
 
-    throw new Error(`Ultimate fetch failed. Attempts: ${JSON.stringify(errors)}`);
+    // Create a racing promise group
+    // We race the top strategies. If any succeeds, we return immediately.
+    // We also set a global timeout of 9 seconds to ensure we definitely respond before Vercel (10s limit).
+
+    return new Promise<string>(async (resolve, reject) => {
+        const globalTimeout = setTimeout(() => {
+            reject(new Error(`Global 9s timeout reached. Best effort errors: ${JSON.stringify(errors)}`));
+        }, 9000);
+
+        try {
+            // Race the first 3 (fastest/most reliable)
+            const result = await Promise.any([
+                strategy1(),
+                strategy2(),
+                strategy4()
+            ]);
+            clearTimeout(globalTimeout);
+            resolve(result);
+        } catch (allFailed: any) {
+            // If all in Group 1 failed, try Strategy 3 (Innertube) as a quick second wave if time remains
+            try {
+                const result = await strategy3();
+                clearTimeout(globalTimeout);
+                resolve(result);
+            } catch (s3Failed) {
+                clearTimeout(globalTimeout);
+                reject(new Error(`All strategies failed. Log: ${JSON.stringify(errors)}`));
+            }
+        }
+    });
 }
 
 export async function POST(req: NextRequest) {
