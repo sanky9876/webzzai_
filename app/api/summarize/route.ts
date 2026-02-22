@@ -13,7 +13,7 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
             console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Starting ${name}`);
             const result = await fn();
             if (!result || result.trim().length === 0) throw new Error("Result was empty");
-            console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] ${name} SUCCEEDED (Length: ${result.length})`);
+            console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] ${name} SUCCEEDED`);
             return result;
         } catch (e: any) {
             const msg = `[${Date.now() - fetchStartTime}ms] ${name} FAILED: ${e.message}`;
@@ -30,112 +30,156 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
         return transcriptItems.map(item => item.text).join(' ');
     });
 
-    const s2_python = () => runStrategy("Strategy 2 (Python)", async () => {
-        const { spawn } = require('child_process');
-        const path = require('path');
-        const scriptPath = path.join(process.cwd(), 'scripts', 'get_transcript.py');
+    const s2_python = async () => {
+        // Check if python exists first to avoid waiting for a timeout on Vercel
+        const hasPython = await new Promise(resolve => {
+            const { exec } = require('child_process');
+            exec('python --version', (err: any) => resolve(!err));
+        });
 
-        return new Promise<string>((resolve, reject) => {
-            const pythonProcess = spawn('python', [scriptPath, videoId]);
-            let scriptOutput = '';
-            let scriptError = '';
+        if (!hasPython) {
+            const msg = "[Transcript] Python not found in this environment, skipping Strategy 2";
+            console.log(msg);
+            errors.push(msg);
+            throw new Error("Python unavailable");
+        }
 
-            const timeout = setTimeout(() => {
-                pythonProcess.kill();
-                reject(new Error('Process timed out'));
-            }, 10000); // 10s for Python
+        return runStrategy("Strategy 2 (Python)", async () => {
+            const { spawn } = require('child_process');
+            const path = require('path');
+            const scriptPath = path.join(process.cwd(), 'scripts', 'get_transcript.py');
 
-            pythonProcess.stdout.on('data', (data: any) => { scriptOutput += data.toString(); });
-            pythonProcess.stderr.on('data', (data: any) => { scriptError += data.toString(); });
-            pythonProcess.on('close', (code: any) => {
-                clearTimeout(timeout);
-                if (code !== 0) reject(new Error(`Exit ${code}: ${scriptError}`));
-                else {
-                    try {
-                        const res = JSON.parse(scriptOutput);
-                        if (res.transcript) resolve(res.transcript);
-                        else reject(new Error(res.error || "No transcript"));
-                    } catch (e) { reject(new Error("JSON Parse fail")); }
-                }
+            return new Promise<string>((resolve, reject) => {
+                const pythonProcess = spawn('python', [scriptPath, videoId]);
+                let scriptOutput = '';
+                let scriptError = '';
+
+                const timeout = setTimeout(() => {
+                    pythonProcess.kill();
+                    reject(new Error('Process timed out'));
+                }, 8000); // Shorter internal timeout
+
+                pythonProcess.stdout.on('data', (data: any) => { scriptOutput += data.toString(); });
+                pythonProcess.stderr.on('data', (data: any) => { scriptError += data.toString(); });
+                pythonProcess.on('close', (code: any) => {
+                    clearTimeout(timeout);
+                    if (code !== 0) reject(new Error(`Exit ${code}: ${scriptError}`));
+                    else {
+                        try {
+                            const res = JSON.parse(scriptOutput);
+                            if (res.transcript) resolve(res.transcript);
+                            else reject(new Error(res.error || "No transcript"));
+                        } catch (e) { reject(new Error("JSON Parse fail")); }
+                    }
+                });
             });
         });
-    });
+    };
 
     const s3_html = () => runStrategy("Strategy 3 (HTML-TimedText)", async () => {
-        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        const res = await fetch(videoUrl, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36' }
-        });
-        const html = await res.text();
+        // Try both standard and Shorts URLs
+        const urls = [
+            `https://www.youtube.com/watch?v=${videoId}`,
+            `https://www.youtube.com/shorts/${videoId}`
+        ];
 
-        // Comprehensive regex to find caption info
-        const playerResponseRegex = /ytInitialPlayerResponse\s*=\s*({.+?});/;
-        const match = html.match(playerResponseRegex);
-        if (!match) throw new Error("No player response found in HTML");
+        for (const url of urls) {
+            try {
+                const res = await fetch(url, {
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36' }
+                });
+                const html = await res.text();
 
-        const playerRes = JSON.parse(match[1]);
-        const captions = playerRes?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-        if (!captions || captions.length === 0) throw new Error("No caption tracks in player response");
-
-        // Prefer English, fallback to auto-generated, fallback to index 0
-        const track = captions.find((t: any) => t.languageCode === 'en' && !t.kind) ||
-            captions.find((t: any) => t.languageCode === 'en') ||
-            captions[0];
-
-        // Fetch XML and parse manually
-        const url = track.baseUrl + "&fmt=vtt"; // Try VTT for easier parsing if XML is blocked
-        const transcriptRes = await fetch(url);
-        const vttText = await transcriptRes.text();
-
-        // Simple VTT to Text
-        const cleanText = vttText
-            .replace(/WEBVTT[\s\S]*?\n\n/g, '') // remove header
-            .replace(/<[\s\S]*?>/g, '') // remove tags
-            .replace(/\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}/g, '') // remove timestamps
-            .replace(/\n+/g, ' ') // join lines
-            .trim();
-
-        if (cleanText.length < 10) throw new Error("Transcript content too short");
-        return cleanText;
+                const playerResponseRegex = /ytInitialPlayerResponse\s*=\s*({.+?});/;
+                const match = html.match(playerResponseRegex);
+                if (match) {
+                    const playerRes = JSON.parse(match[1]);
+                    const captions = playerRes?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+                    if (captions && captions.length > 0) {
+                        const track = captions.find((t: any) => t.languageCode === 'en' && !t.kind) ||
+                            captions.find((t: any) => t.languageCode === 'en') ||
+                            captions[0];
+                        const transcriptRes = await fetch(track.baseUrl + "&fmt=vtt");
+                        const vttText = await transcriptRes.text();
+                        return vttText.replace(/WEBVTT[\s\S]*?\n\n/g, '').replace(/<[\s\S]*?>/g, '').replace(/\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}/g, '').replace(/\n+/g, ' ').trim();
+                    }
+                }
+            } catch (e) { /* try next url */ }
+        }
+        throw new Error("No caption tracks found in HTML paths");
     });
 
-    const s4_innertube = (client: string) => runStrategy(`Strategy 4 (Innertube-${client})`, async () => {
+    const s4_innertube = (client: 'WEB' | 'ANDROID' | 'TV' | 'IOS') => runStrategy(`Strategy 4 (Innertube-${client})`, async () => {
         const yt = await Innertube.create({ generate_session_locally: true, client_type: client as any });
+
+        // Use raw player access to be safer against internal library crashes
+        const playerResponse = await yt.actions.execute('/player', { videoId, parse: true });
+        const captions = (playerResponse as any).captions?.player_captions_tracklist_renderer?.caption_tracks;
+
+        if (captions && captions.length > 0) {
+            const track = captions.find((t: any) => t.language_code === 'en') || captions[0];
+            const baseUrl = track.base_url;
+            if (baseUrl) {
+                const res = await fetch(baseUrl + "&fmt=vtt");
+                const vttText = await res.text();
+                return vttText.replace(/WEBVTT[\s\S]*?\n\n/g, '').replace(/<[\s\S]*?>/g, '').replace(/\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}/g, '').replace(/\n+/g, ' ').trim();
+            }
+        }
+
+        // Fallback to high-level API if player response was empty but not crashed
         const info = await yt.getInfo(videoId);
         const transcript = await info.getTranscript();
         const segments = (transcript as any)?.transcript?.content?.body?.initial_segments;
-        if (!segments) throw new Error("No segments in transcript");
+        if (!segments) throw new Error("No segments found");
         return segments.map((s: any) => s.snippet.text).join(' ');
     });
 
-    // --- PARALLEL RACE ---
+    const s5_description = () => runStrategy("Strategy 5 (Description Fallback)", async () => {
+        const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+        if (!apiKey) throw new Error("No Google API Key for fallback");
+
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`);
+        const data = await res.json();
+        const description = data.items?.[0]?.snippet?.description;
+        if (!description || description.trim().length < 50) throw new Error("Description too short or missing");
+        return `[FALLBACK: TRANSCRIPT NOT AVAILABLE. USING VIDEO DESCRIPTION]\n\n${description}`;
+    });
+
+    // --- PARALLEL EXECUTION WAVE ---
 
     return new Promise<string>(async (resolve, reject) => {
         const globalTimeout = setTimeout(() => {
-            reject(new Error(`Timed out after 9.5s. Attempts logged: ${JSON.stringify(errors)}`));
+            reject(new Error(`Global 9.5s timeout. Errors: ${JSON.stringify(errors.slice(-4))}`));
         }, 9500);
 
         try {
-            // First wave: Fastest & most reliable
+            // Wave 1: Immediate Parallel Race
             const result = await Promise.any([
                 s1_youtubeTranscript(),
                 s3_html()
             ]);
             clearTimeout(globalTimeout);
             resolve(result);
-        } catch (wave1Errors) {
-            // Second wave: Most robust fallbacks
+        } catch (w1Fail) {
             try {
+                // Wave 2: Robust Fallbacks
                 const result = await Promise.any([
                     s2_python(),
-                    s4_innertube('ANDROID'),
-                    s4_innertube('TV')
+                    s4_innertube('WEB'),
+                    s4_innertube('IOS')
                 ]);
                 clearTimeout(globalTimeout);
                 resolve(result);
-            } catch (wave2Errors) {
-                clearTimeout(globalTimeout);
-                reject(new Error(`All strategies failed. Details: ${JSON.stringify(errors.slice(-5))}`));
+            } catch (w2Fail) {
+                try {
+                    // Wave 3: Final Desperation (Description)
+                    const result = await s5_description();
+                    clearTimeout(globalTimeout);
+                    resolve(result);
+                } catch (s5Fail) {
+                    clearTimeout(globalTimeout);
+                    reject(new Error(`Full Failure. Logs: ${JSON.stringify(errors.slice(-6))}`));
+                }
             }
         }
     });
