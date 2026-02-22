@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { YoutubeTranscript } from 'youtube-transcript';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateSummary } from '@/lib/llm';
 import { Innertube, UniversalCache } from 'youtubei.js';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // Helper to fetch transcript using multiple strategies
 async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promise<string> {
@@ -183,8 +181,47 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
             // Keeping the block structure for now to minimize diff, but logic is fine.
             // Actually, let's just keep the contents.
             try {
-                console.log(`[Transcript] Strategy 3: Python Fallback for ${videoId}`);
-                // ... logic ...
+                const { spawn } = require('child_process');
+                const path = require('path');
+
+                const scriptPath = path.join(process.cwd(), 'scripts', 'get_transcript.py');
+                console.log(`[Transcript] Spawning python script: ${scriptPath} for ${videoId}`);
+
+                const pythonProcess = spawn('python', [scriptPath, videoId]);
+
+                let scriptOutput = '';
+                let scriptError = '';
+
+                await new Promise((resolve, reject) => {
+                    pythonProcess.stdout.on('data', (data: any) => {
+                        scriptOutput += data.toString();
+                    });
+
+                    pythonProcess.stderr.on('data', (data: any) => {
+                        scriptError += data.toString();
+                    });
+
+                    pythonProcess.on('close', (code: any) => {
+                        if (code !== 0) {
+                            reject(new Error(`Python script exited with code ${code}. Error: ${scriptError}`));
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                });
+
+                try {
+                    const result = JSON.parse(scriptOutput);
+                    if (result.transcript) {
+                        return result.transcript;
+                    } else if (result.error) {
+                        throw new Error(result.error);
+                    } else {
+                        throw new Error('Invalid JSON output from Python script');
+                    }
+                } catch (e: any) {
+                    throw new Error(`Failed to parse Python output: ${e.message}. Output: ${scriptOutput}`);
+                }
             } catch (e: any) {
                 console.warn(`[Transcript] Strategy 3 failed: ${e.message}`);
                 errors.push(`Strategy 3: ${e.message}`);
@@ -210,8 +247,8 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Transcript] Request received for: ${videoUrl} (Version: v2.0)`);
 
-        if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json({ error: 'Gemini API key is not configured' }, { status: 500 });
+        if (!process.env.GROQ_API_KEY) {
+            return NextResponse.json({ error: 'Groq API key is not configured' }, { status: 500 });
         }
 
         // Extract Video ID
@@ -234,38 +271,10 @@ export async function POST(req: NextRequest) {
         // Limit transcript length
         const truncatedTranscript = transcriptText.substring(0, 30000);
 
-        // Generate Summary with Gemini
-        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-        const prompt = `
-      You are an expert AI study assistant. 
-      Analyze the following YouTube video transcript and generate a comprehensive summary and structured study notes.
-      
-      Output Format:
-      # Video Title (Infer if possible, else "Video Summary")
-      
-      ## Summary
-      [Concise summary of the video content]
+        // Generate Summary with Groq
+        const summaryText = await generateSummary(truncatedTranscript);
 
-      ## Key Concepts
-      - [Concept 1]: [Explanation]
-      - [Concept 2]: [Explanation]
-
-      ## Study Notes
-      [Detailed bullet points or numbered list]
-
-      ## Quiz (Optional)
-      [3 short questions to test understanding]
-
-      ---
-      Transcript:
-      ${truncatedTranscript}
-    `;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        return NextResponse.json({ summary: text });
+        return NextResponse.json({ summary: summaryText });
 
     } catch (error) {
         console.error('API Error Details:', error);
