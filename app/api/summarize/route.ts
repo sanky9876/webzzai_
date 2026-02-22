@@ -33,7 +33,7 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
             const timeout = setTimeout(() => {
                 pythonProcess.kill();
                 reject(new Error('Python script timed out'));
-            }, 10000); // 10s timeout
+            }, 30000); // 30s timeout to handle long transcripts
 
             pythonProcess.stdout.on('data', (data: any) => { scriptOutput += data.toString(); });
             pythonProcess.stderr.on('data', (data: any) => { scriptError += data.toString(); });
@@ -50,7 +50,7 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
         errors.push(`Strategy 2: ${e.message}`);
     }
 
-    // Strategy 3: Manual HTML Parsing (Faster than Innertube usually)
+    // Strategy 3: Manual HTML Parsing
     try {
         console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Strategy 3: Manual HTML`);
         const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
@@ -67,7 +67,7 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
         if (playerMatch) {
             const playerResponse = JSON.parse(playerMatch[1]);
             const captions = (playerResponse.captions as any)?.playerCaptionsTracklistRenderer?.captionTracks;
-            if (captions) {
+            if (captions && captions.length > 0) {
                 const enTrack = captions.find((t: any) => t.languageCode === 'en') || captions[0];
                 if (enTrack && enTrack.baseUrl) {
                     const transcriptRes = await fetch(enTrack.baseUrl);
@@ -81,13 +81,14 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
                 }
             }
         }
+        errors.push("Strategy 3: No caption tracks found in HTML");
     } catch (e: any) {
         errors.push(`Strategy 3: ${e.message}`);
     }
 
-    // Strategy 4: last resort - Innertube (Slowest)
+    // Strategy 4: last resort - Innertube
     try {
-        console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Strategy 4: Innertube (WEB/ANDROID)`);
+        console.log(`[${Date.now() - fetchStartTime}ms] [Transcript] Strategy 4: Innertube`);
         const yt = await Innertube.create({ generate_session_locally: true, client_type: 'WEB' as any });
         const playerResponse = await yt.actions.execute('/player', { videoId, parse: true });
         const captions = (playerResponse.captions as any)?.playerCaptionsTracklistRenderer?.captionTracks;
@@ -101,6 +102,7 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
             }
             if (fullText.trim().length > 0) return fullText.trim();
         }
+        errors.push("Strategy 4: No caption tracks found via Innertube");
     } catch (e: any) {
         errors.push(`Strategy 4: ${e.message}`);
     }
