@@ -10,8 +10,10 @@ const pdf = require('pdf-parse');
 console.log('PDF Parse Library Type:', typeof pdf);
 
 export async function POST(request: NextRequest) {
+    console.log('[Upload] POST request starting');
     const session = await getSession();
     if (!session || !session.email) {
+        console.warn('[Upload] Unauthorized');
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,9 +26,17 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const workspaceId = formData.get('workspaceId') ? parseInt(formData.get('workspaceId') as string) : null;
+    const wsIdStr = formData.get('workspaceId') as string;
+    let workspaceId = null;
+    if (wsIdStr && wsIdStr !== 'undefined' && wsIdStr !== 'null') {
+        const parsed = parseInt(wsIdStr);
+        if (!isNaN(parsed)) workspaceId = parsed;
+    }
+
+    console.log(`[Upload] File: ${file?.name}, WorkspaceId: ${workspaceId}, User: ${session.email}`);
 
     if (!file) {
+        console.warn('[Upload] No file provided');
         return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
@@ -64,10 +74,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Save document metadata with workspace_id
+    console.log('[Upload] Saving document metadata to DB...');
     const docRes = await query(
         'INSERT INTO documents (user_id, filename, file_type, storage_path, workspace_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
         [userId, filename, fileType, filePath, workspaceId]
     );
+    console.log(`[Upload] Document saved with ID: ${docRes.rows[0].id}`);
     const docId = docRes.rows[0].id;
 
     // Chunking Strategy (Simple: 1000 characters overlap 100)

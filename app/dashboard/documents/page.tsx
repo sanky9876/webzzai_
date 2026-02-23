@@ -53,20 +53,24 @@ export default function DocumentsPage() {
                         <tr>
                             <th>Filename</th>
                             <th>Type</th>
+                            <th>Workspace</th>
                             <th>Upload Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={4}>Loading...</td></tr>
+                            <tr><td colSpan={5}>Loading...</td></tr>
                         ) : documents.length === 0 ? (
-                            <tr><td colSpan={4}>No documents found. Upload one to get started.</td></tr>
+                            <tr><td colSpan={5}>No documents found. Upload one to get started.</td></tr>
                         ) : (
-                            documents.map((doc) => (
+                            documents.map((doc: any) => (
                                 <tr key={doc.id}>
                                     <td>{doc.filename}</td>
                                     <td>{doc.file_type}</td>
+                                    <td style={{ color: doc.workspace_name ? '#60a5fa' : '#888' }}>
+                                        {doc.workspace_name || 'Global / None'}
+                                    </td>
                                     <td>{new Date(doc.upload_date).toLocaleDateString()}</td>
                                     <td>
                                         <Link href={`/dashboard/documents/${doc.id}`}>

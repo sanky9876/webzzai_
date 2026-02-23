@@ -17,7 +17,11 @@ export async function GET(request: NextRequest) {
     const userId = userRes.rows[0].id;
 
     const res = await query(
-        'SELECT id, filename, file_type, upload_date FROM documents WHERE user_id = $1 ORDER BY upload_date DESC',
+        `SELECT d.id, d.filename, d.file_type, d.upload_date, w.name as workspace_name 
+         FROM documents d
+         LEFT JOIN workspaces w ON d.workspace_id = w.id
+         WHERE d.user_id = $1 
+         ORDER BY d.upload_date DESC`,
         [userId]
     );
 
