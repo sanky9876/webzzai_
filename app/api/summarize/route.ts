@@ -187,66 +187,179 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
 
 const RANDOM_SUMMARIES = [
     {
-        topic: "Quantum Physics & The Nature of Reality",
-        summary: `Quantum physics is the study of matter and energy at its most fundamental level. It reveals that at very small scales, the universe operates on a set of rules that are vastly different from our daily experience.
+        topic: "The Ultimate Guide to Quantum Mechanics & The Fabric of Reality",
+        summary: `# Part 1: Foundations and the Classical Crisis
 
-**Key Concepts:**
-1. **Superposition:** Particles like electrons can exist in multiple states or locations simultaneously until they are observed. This is famously illustrated by Schrödinger's Cat thought experiment.
-2. **Entanglement:** Two particles can become 'linked' such that the state of one instantly influences the other, even if they are separated by billions of light-years. Albert Einstein famously called this "spooky action at a distance."
-3. **Wave-Particle Duality:** Quantum entities exhibit properties of both particles (localized objects) and waves (oscillations that spread through space).
-4. **Uncertainty Principle:** Proposed by Werner Heisenberg, it states that we cannot simultaneously know both the exact position and exact momentum of a particle with absolute precision.
+Quantum mechanics is the branch of physics that deals with the behavior of matter and energy at the scale of atoms and subatomic particles. It is the most successful physical theory in human history, providing the basis for our entire modern technological civilization.
 
-**Impact on Technology:**
-This field challenges our classical understanding of reality and forms the basis for modern technologies like transistors (the building blocks of computers), lasers, MRI machines, and the emerging field of quantum computing, which promises to solve complex problems far beyond the reach of current supercomputers.`
+## 1.1 The Birth of the Quantum
+At the tail end of the 19th century, physicists believed they had nearly completed the "Grand Map of Physics." Newtonian mechanics explained the motion of planets, and Maxwell’s equations explained electromagnetism. However, two major anomalies remained: **Blackbody Radiation** and the **Photoelectric Effect**. 
+
+Max Planck solved the former in 1900 by proposing a radical idea: energy is not continuous, like water flowing, but is emitted in discrete packets relative to a constant. He called these packets "quanta." Albert Einstein later extended this to light, proposing that light itself is made of particles called photons. This was the spark that lit the quantum fire.
+
+## 1.2 Wave-Particle Duality
+Perhaps the most jarring aspect of quantum mechanics is that every particle or quantum entity may be described as either a particle or a wave. The famous **Double-Slit Experiment** demonstrates this: when electrons are fired at two slits, they form an interference pattern (like waves) even when fired one at a time. However, if we "watch" which slit the electron goes through using a detector, the interference pattern disappears, and it behaves like a classical particle. This suggests that the universe behaves differently depending on whether it is being observed.
+
+# Part 2: Core Quantum Principles - The 'Weirdness' Explained
+
+## 2.1 The Wave Function (Psi) and Probability
+In the quantum realm, we stop using definite trajectories and start using probabilities. The state of a system is described by a mathematical entity called the **Wave Function**. The square of the wave function gives the probability of finding a particle in a specific location. Before a measurement is made, the particle is literally spread out across all possible locations.
+
+## 2.2 Superposition: The Multi-State Reality
+A quantum system can exist in multiple states simultaneously. This is **Superposition**. A famous thought experiment by Erwin Schrödinger involves a cat in a box that is both "dead and alive" until someone opens the box to look. While it sounds like a paradox, superposition is what allows quantum computers to process massive amounts of data in parallel.
+
+## 2.3 Entanglement: Einstein's 'Spooky Action'
+When two particles become entangled, their states are inextricably linked. Measuring the spin of one particle instantly determines the spin of the other, no matter how far apart they are—even if they are on opposite sides of the galaxy. This communication happens faster than the speed of light, a phenomenon that famously bothered Albert Einstein, who called it "spooky action at a distance."
+
+## 2.4 Heisenberg’s Uncertainty Principle
+You cannot know everything. Specifically, the more accurately you know a particle's position, the less accurately you can know its momentum. This isn't a limitation of our tools or our human intelligence; it is a fundamental, baked-in property of the universe itself. At the smallest scales, nature is inherently fuzzy.
+
+# Part 3: Advanced Concepts and the Quantum Field
+
+## 3.1 Quantum Tunneling
+Quantum tunneling is the phenomenon where a particle can pass through a potential barrier that it classically should not be able to cross. Think of it as a ball "ghosting" through a solid wall. This is how the Sun shines (nuclear fusion) and how your USB plastic memory sticks function.
+
+## 3.2 The Pauli Exclusion Principle
+Proposed by Wolfgang Pauli, this principle states that no two fermions (like electrons) can occupy the same quantum state simultaneously. This is the reason why solid matter exists. Without it, all the electrons in your body would collapse into the lowest energy level, and you would disappear into a single point of light.
+
+## 3.3 Quantum Electrodynamics (QED)
+Richard Feynman, Julian Schwinger, and Sin-Itiro Tomonaga developed QED to describe how light and matter interact. It is often cited as the most precise theory in science, with predictions matching experimental results to more than ten decimal places.
+
+# Part 4: Applications and the Second Quantum Revolution
+
+## 4.1 The Silicon Age
+Without quantum mechanics, we would not have the **Transistor**. Since every digital device on Earth—phones, laptops, cars, medical monitors—relies on trillions of transistors, the entire digital age is a direct product of quantum science. Lasers, MRI machines, and LED lights also rely on deliberate quantum transitions.
+
+## 4.2 Quantum Computing: The Final Frontier
+We are now entering the "Second Quantum Revolution." Quantum computers use **Qubits** (which can be 0, 1, or a superposition of both) to perform calculations that would take a classical supercomputer thousands of years. This will revolutionize cryptography, drug discovery for cancer and Alzheimer's, and the creation of new materials.
+
+## 4.3 Quantum Teleportation and Communication
+Scientists have already achieved quantum teleportation of information. This doesn't mean moving matter (like in Star Trek), but it does allow for unhackable communication networks using Quantum Key Distribution (QKD). In a future quantum internet, any attempt to eavesdrop would instantly collapse the wave function, alerting the users.
+
+# Part 5: Philosophical and Cosmological Implications
+
+Quantum mechanics suggests that the act of observation is fundamental to the creation of reality. This has led to several competing "Interpretations":
+- **Copenhagen Interpretation:** The universe is probabilistic, and the wave function "collapses" into a single state only when an observer intervenes.
+- **Many-Worlds Interpretation:** Every quantum event branches the universe into multiple parallel realities. In this view, there are infinite versions of you living in an infinite Multiverse.
+- **Objective Reduction:** Speculates that consciousness or gravity itself causes the wave function to collapse naturally.
+
+**Conclusion:**
+Quantum mechanics is not just a branch of physics; it is a fundamental shift in how we perceive existence. It tells us that the world is not a collection of solid objects moving through space, but a vast, interconnected web of probabilities and energy that only becomes "real" when we choose to look.`
     },
     {
-        topic: "The Comprehensive History of Pizza",
-        summary: `Modern pizza, as we recognize it today, has a rich and complex history that spans centuries and continents. While flatbreads with toppings were consumed by ancient civilizations like the Greeks and Egyptians, the birthplace of the modern pizza is Naples, Italy.
+        topic: "The Culinary Odyssey: A Definitive History of Pizza and Civilization",
+        summary: `# Section 1: The Pre-History of Flatbreads (Ancient Era)
 
-**The Evolution:**
-1. **Street Food Roots (1700s):** In the late 18th century, Naples was a thriving waterfront city. Pizza was a cheap, nutritious street food sold by informal vendors to the working poor (lazzaroni). It was initially dismissed by food writers as "disgusting."
-2. **Royal Approval (1889):** Legend has it that Queen Margherita of Savoy visited Naples and was bored with the gourmet French cuisine. She requested a variety of pizzas from Pizzeria Brandi. Her favorite was the one featuring tomatoes, mozzarella, and basil—matching the colors of the Italian flag. This became the world-famous Pizza Margherita.
-3. **The American Boom (1900s):** Italian immigrants brought pizza to the United States. Lombardi's, the first licensed pizzeria in New York, opened in 1905. However, pizza truly exploded in popularity after World War II, when returning soldiers who had tasted it in Italy began seeking it out at home.
-4. **Global Phenomenon:** Today, pizza is one of the most popular foods on Earth, evolving into countless regional styles—from the thin, crispy New York slice to the deep-dish Chicago pie, and from the sophisticated artisanal varieties in Japan to the unique breakfast pizzas found in Australia.`
+The story of pizza does not begin in an Italian kitchen with a red-and-white checkered tablecloth; it begins with the first agricultural revolutions of humanity. Flatbread is the oldest form of bread in human history, born when early humans first learned to crush grain, mix it with water, and bake it on hot stones.
+
+## 1.1 The Persian Shield-Bakers
+Historical records from the 6th century BC suggest that the soldiers of the Persian Empire, under the leadership of King Darius the Great, would bake flatbreads on their bronze shields while on the march. They would top these breads with cheese and dates for energy—making these essentially the world's first documented "pizzas."
+
+## 1.2 The Greco-Roman 'Plakous'
+The ancient Greeks developed a version called "plakous," which was a flat dough flavored with oils, herbs, garlic, and onions. When the Romans conquered Greece, they adopted this food and called it "picea." In the ruins of Pompeii, archaeologists have found evidence of shops that closely resemble modern pizzerias, including circular bread fossils.
+
+# Section 2: Naples - The Crucible of the Modern Pizza
+
+## 2.1 The Poor Man's Survival Meal (17th-18th Century)
+By the 1700s, Naples had become a bustling, overpopulated maritime hub. To feed the massive population of urban poor (known as the lazzaroni), bakers began selling large, flat dough rounds topped with lard, salt, and garlic. It was food for people who had no kitchen and had to eat while walking. For centuries, the wealthy elite viewed pizza with absolute disgust, describing it as "socially inferior" and "unrefined."
+
+## 2.2 The Great Tomato Breakthrough
+Tomatoes arrived in Europe from the "New World" (the Americas) in the 1500s. For over two centuries, they were feared as poisonous because they belonged to the nightshade family. It was only the starving peasants of Naples who, out of sheer desperation, began putting sliced tomatoes on their flatbread. This was the singular moment that defined "pizza" as a unique dish rather than just another bread.
+
+## 2.3 The Royal Visit of 1889
+The turning point for pizza's image came with the unification of Italy. King Umberto I and Queen Margherita visited Naples in 1889. The Queen, tired of the repetitive and heavy French cuisine of the court, asked to try the local peasant food. Chef Raffaele Esposito was summoned to create something special. He presented three varieties:
+1. Pizza with lard and cheese.
+2. Pizza with tiny fish (cecenielli).
+3. Pizza with tomato, mozzarella, and fresh basil.
+
+The Queen was enamored with the third one because its colors (red, white, and green) matched the new Italian flag. This variety was named the "Margherita" in her honor, and it bestowed royal legitimacy upon a food that was once considered a "peasant's disgrace."
+
+# Section 3: The Global Diaspora and American Influence
+
+## 3.1 Migration and the Birth of the New York Slice
+In the late 19th and early 20th centuries, millions of Italians migrated to the United States. In 1905, Gennaro Lombardi opened the first licensed pizzeria in America on Spring Street in Manhattan. Because many customers couldn't afford a whole pie, he began selling it by the slice—a tradition that would define New York food culture for the next century.
+
+## 3.2 The Post-WWII Transformation
+Pizza remained an ethnic curiosity until World War II. American soldiers who had been stationed in Italy during the liberation discovered the dish and returned home with a massive craving for it. Within a decade, pizzerias began appearing in every small town in the Midwest and the South.
+
+## 3.3 The Era of Delivery and Global Chains
+The 1950s saw the arrival of the "Fast Food" revolution. Brothers Dan and Frank Carney founded Pizza Hut in 1958, and Tom Monaghan started Domino’s in 1960. By focusing on car-culture and rapid home delivery, they turned a handcrafted Italian trade into a multi-billion dollar global industry.
+
+# Section 4: A World of Diversity (Regional Styles)
+
+## 4.1 The American Trinity
+- **New York Style:** Large, flexible, thin-crust slices meant to be folded in half. The secret is often said to be the mineral content of NYC's tap water used in the dough.
+- **Chicago Deep-Dish:** More like a savory cake than a flatbread. It is baked in an oiled steel pan, with layers of mozzarella followed by meat/vegetables, and finally a thick layer of crushed tomato sauce on top.
+- **Detroit Style:** A rectangular pizza with a thick, airy crust and a characteristic "frico"—a crispy, caramelized cheese edge formed against the walls of the square pan.
+
+## 4.2 International Interpretations
+- **Brazil:** Known for eccentric toppings like green peas, raisins, and incluso hard-boiled eggs.
+- **Japan:** Often features "luxury" toppings like seafood, squid ink, or Wagyu beef, frequently accompanied by kewpie mayonnaise.
+- **Sweden:** Famous for the "Banana Curry Pizza," which features ham, curry powder, and sliced bananas.
+
+# Section 5: The Science and Ethics of Pizza Today
+
+In recent years, there has been a movement back toward the artisanal roots of pizza. The **AVPN (Associazione Verace Pizza Napoletana)** mandates that "true" Neapolitan pizza must be baked in wood-fired ovens at exactly 905°F for no more than 60-90 seconds. It must use only highly refined "Tipo 00" flour and San Marzano tomatoes grown on the volcanic slopes of Mount Vesuvius.
+
+**Conclusion:**
+From its beginnings as a Persian shield-snack to its current status as a $150 billion global industry, pizza is more than just food. It is a mirror of human migration, social class evolution, and cultural adaptation. Whether it's a $1 slice in a subway station or a $50 artisanal pie in Rome, pizza remains the world's most universal language of sustenance.`
     },
     {
-        topic: "Rainforests: The Lungs and Thermostats of Earth",
-        summary: `Rainforests, particularly the massive Amazon Basin, play a crucial and irreplaceable role in regulating the Earth's climate and supporting life. They are often called the "Lungs of the Planet," but they act just as much as a global thermostat.
+        topic: "The Amazon Biome: The Living Heart of the Planet",
+        summary: `# Part 1: Anatomy of a Giant (Geography and Climate)
 
-**Critical Functions:**
-1. **Carbon Sequestration:** Tropical rainforests are massive carbon sinks. Through photosynthesis, they absorb billions of tons of carbon dioxide annually, helping to mitigate the greenhouse effect and slow global warming.
-2. **The Water Cycle:** Rainforests are massive moisture pumps. Through a process called evapotranspiration, trees release water vapor into the atmosphere. This creates "flying rivers"—massive currents of moisture that influence rainfall patterns thousands of miles away, providing water for agriculture across entire continents.
-3. **Biodiversity Hotspots:** While covering only 6% of Earth's land surface, rainforests house more than half of the world's plant and animal species. This biodiversity is a treasure trove for potential medical breakthroughs, as many of our modern pharmaceuticals are derived from rainforest plants.
-4. **Global Cooling:** The dense canopy reflects sunlight and the constant evaporation of water creates clouds that further reflect solar radiation back into space, providing a cooling effect that is vital for maintaining global weather stability.
+The Amazon Rainforest is not just a forest; it is a colossal, self-sustaining biological engine that fundamentally influences the entire planet's systems. Spanning 5.5 million square kilometers (about 2.1 million square miles), it covers more than half of the world's remaining tropical rainforest territory.
 
-**Threats and Conservation:**
-Deforestation for logging, mining, and cattle ranching remains a severe threat. Protecting these ecosystems is not just an environmental concern; it is a matter of global security and climate stability.`
-    },
-    {
-        topic: "The Great Wall: More Than Just a Wall",
-        summary: `The Great Wall of China is one of the most impressive architectural feats in human history, stretching across the historical northern borders of ancient Chinese states and Imperial China. It is not a single continuous wall but a complex system of fortifications.
+## 1.1 The Nine Nations
+While 60% of the Amazon is within Brazil, the biome stretches across eight other nations: Peru, Colombia, Venezuela, Ecuador, Bolivia, Guyana, Suriname, and French Guiana. This makes it a complex geopolitical entity requiring international cooperation for its protection.
 
-**Construction and Purpose:**
-1. **Centuries of Labor:** Construction began as early as the 7th century BC. Various dynasties added to, connected, and rebuilt sections over 2,000 years. The most famous and well-preserved sections we see today were built by the Ming Dynasty (1368–1644).
-2. **Vast Dimensions:** The official length issued by China's State Administration of Cultural Heritage is 21,196 kilometers (over 13,000 miles). This includes actual walls, trenches, and natural defensive barriers like hills and rivers.
-3. **Multifunctional Defense:** It served as more than just a barrier. It was a sophisticated military system featuring watchtowers for surveillance, beacon towers for long-distance signaling using smoke and fire, and garrisons for troops.
-4. **Trade and Control:** The wall also helped regulate trade along the Silk Road, allowed for the collection of duties, and controlled the movement of people across the borders.
+## 1.2 The Mighty River System
+The rainforest is anchored by the Amazon River, the largest river in the world by the volume of water it discharges. It carries approximately 20% of all the freshwater that enters the Earth's oceans. The river is so deep and wide that ocean-going ships can navigate thousands of miles inland to the city of Iquitos in Peru.
 
-**Historical Myths:**
-Contrary to the popular 20th-century myth, the Great Wall is generally not visible to the naked eye from the Moon, and it is difficult to see from low Earth orbit without specialized equipment or perfect conditions, as its materials often blend into the surrounding landscape.`
-    },
-    {
-        topic: "AI in Medicine: The Future of Healthcare",
-        summary: `Artificial Intelligence is no longer a futuristic concept in healthcare; it is actively revolutionizing how we diagnose, treat, and understand human health. From early detection to drug discovery, AI is enhancing the capabilities of medical professionals.
+# Part 2: The Cradle of Biodiversity
 
-**Key Applications:**
-1. **Medical Imaging & Diagnostics:** Machine learning algorithms, particularly deep learning, can analyze medical images (X-rays, MRIs, CT scans) with incredible speed. For certain conditions like skin cancer or diabetic retinopathy, AI has shown accuracy levels that rival or even exceed senior specialists.
-2. **Personalized Medicine:** AI can process vast amounts of genetic data, lifestyle factors, and medical history to suggest highly tailorable treatment plans for individual patients, moving away from a "one-size-fits-all" approach.
-3. **Drug Discovery:** Developing a new drug traditionally takes over a decade and billions of dollars. AI is slashing this time by predicting how different molecular structures will interact with targets in the body, identifying viable candidates in weeks rather than years.
-4. **Virtual Health Assistants:** AI-powered chatbots and monitors help patients manage chronic conditions, provide mental health support, and offer preliminary triage, reducing the burden on overstretched healthcare systems.
+The Amazon is the most biodiverse place on Earth. It is estimated that one in ten known species in the world—and one in five known bird species—live in the Amazon.
 
-**Ethical and Technical Challenges:**
-Despite its promise, the integration of AI faces hurdles. These include data privacy concerns, the "black box" problem (understanding *how* an AI reached a specific conclusion), and the potential for algorithmic bias if the data used to train the AI is not sufficiently diverse.`
+## 2.1 The Flora: The Green Canopy
+The Amazon contains an estimated **390 billion individual trees**, divided into more than 16,000 species. These range from the massive Kapok trees that tower over the canopy to delicate epiphytes that live entirely on the branches of other plants.
+
+## 2.2 The Fauna: Lords of the Jungle
+- **Apex Predators:** The Jaguar is the king of the Amazon floor, while the Black Caiman reigns in the water.
+- **The Canopy Dwellers:** Thousands of species of monkeys, including the Golden Lion Tamarin and the Howler Monkey, spend their entire lives in the treetops.
+- **The River Giants:** The Amazon is home to the Pink River Dolphin, the Giant Otter, and the Arapaima—one of the world's largest freshwater fish.
+
+## 2.3 The Pharmaceutical Goldmine
+The Amazon is often called the "World's Largest Apothecary." Over 25% of all modern pharmaceuticals are derived from rainforest plants, yet we have studied less than 5% of its floral diversity for medicinal use. Discoveries like **Quinine** (for malaria) and the base for modern muscle relaxants would have been impossible without the knowledge derived from this biome.
+
+# Part 3: The Earth's Thermostat (Climate Regulation)
+
+## 3.1 Carbon Sequestration: The Global Sink
+The Amazon acts as a massive carbon sponge, absorbing about 2 billion tons of carbon dioxide every single year. By pulling this carbon out of the atmosphere, it provides a critical buffer against the worst effects of the greenhouse effect and climate change.
+
+## 3.2 The 'Flying Rivers'
+This is perhaps the Amazon's most vital "service." Through a process called evapotranspiration, the trees of the Amazon pump moisture into the air. A single large tree can release 1,000 liters of water in a single day. This creates massive "Flying Rivers" of vapor that travel across South America, providing the rainfall necessary for multibillion-dollar agriculture in regions as far away as Argentina and Paraguay. Without the Amazon, the southern half of the continent would likely turn into a desert.
+
+# Part 4: The Tipping Point and Environmental Crisis
+
+## 4.1 Drivers of Destruction
+The Amazon is facing an unprecedented crisis. The primary drivers are:
+- **Agribusiness:** Massive tracts are cleared for cattle ranching (70% of deforestation) and large-scale soy production.
+- **Illicit Activity:** Illegal logging and gold mining poison the soil and water with mercury.
+- **Infrastructure:** Highways like the Trans-Amazonian Highway slice through the heart of the jungle, making it easier for land grabbers to access remote areas.
+
+## 4.2 The Dieback Scenario (The Tipping Point)
+Scientists warn that we are approaching a "Tipping Point." If 20-25% of the forest cover is lost, the ecosystem will lose its ability to generate its own rain. At this point, the entire biome will enter a "Dieback" phase, where the lush rainforest collapses and is replaced by a dry, fire-prone savanna. This would release billions of tons of stored carbon, making it impossible to meet global climate goals.
+
+# Part 5: Human History and Indigenous Guardians
+
+## 5.1 The Myth of the 'Empty' Jungle
+For centuries, the Amazon was viewed as a "pristine wilderness" untouched by humans until European arrival. Modern archaeology has shattered this myth. We now know that millions of people lived in the Amazon for thousands of years, creating complex civilizations and even engineered soil (Terra Preta) that is incredibly fertile.
+
+## 5.2 Traditional Stewardship
+Today, the Amazon is home to over 30 million people, including 400 distinct indigenous groups. These communities are the most effective protectors of the forest. Satellite data shows that "Indigenous Territories" have significantly lower rates of deforestation than surrounding areas. Supporting their land rights is widely seen as the most effective "nature-based solution" to the climate crisis.
+
+**Conclusion:**
+The Amazon is not just a distant jungle; it is a vital part of the life support system of every human being on Earth. Whether you live in New York, London, or Tokyo, the air you breathe and the stability of the climate you live in rely on the healthy heartbeat of the Amazon.`
     }
 ];
 
@@ -269,8 +382,8 @@ export async function POST(req: NextRequest) {
 
         const resultText = `### ${selected.topic}\n\n${selected.summary}\n\n---\n*(Note: This is a random summary generator as requested!)*`;
 
-        // Artificial delay to simulate processing (4.5 seconds)
-        await new Promise(resolve => setTimeout(resolve, 4500));
+        // Artificial delay to simulate processing (10 seconds)
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
         return NextResponse.json({ summary: resultText });
 
