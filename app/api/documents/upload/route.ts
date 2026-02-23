@@ -50,12 +50,8 @@ export async function POST(request: NextRequest) {
         await mkdir(uploadDir, { recursive: true });
     } catch (err) { }
 
-    const filePath = path.join(uploadDir, `${Date.now()}-${filename}`);
-
-    // ... (rest of parsing logic)
-    try {
-        await writeFile(filePath, buffer);
-    } catch (error) { }
+    // Skip saving to disk (unreliable on Vercel) and use buffer directly
+    const filePath = `mem://${Date.now()}-${filename}`;
 
     let textContent = '';
     const fileType = file.type;
@@ -63,14 +59,21 @@ export async function POST(request: NextRequest) {
     try {
         if (fileType === 'application/pdf') {
             const data = await pdf(buffer);
-            textContent = data.text;
+            textContent = data.text || '';
         } else if (fileType === 'text/plain') {
             textContent = buffer.toString('utf-8');
         } else {
-            return NextResponse.json({ error: 'Unsupported file type.' }, { status: 400 });
+            return NextResponse.json({ error: `Unsupported file type: ${fileType}` }, { status: 400 });
         }
     } catch (error: any) {
+        console.error('[Upload] Extraction error:', error);
         return NextResponse.json({ error: `Failed to extract text: ${error.message}` }, { status: 500 });
+    }
+
+    if (!textContent || textContent.trim().length === 0) {
+        return NextResponse.json({
+            error: 'Could not extract any text from this file. If it is a PDF, please ensure it contains selectable text (not just images).'
+        }, { status: 400 });
     }
 
     // Save document metadata with workspace_id
@@ -82,24 +85,38 @@ export async function POST(request: NextRequest) {
     console.log(`[Upload] Document saved with ID: ${docRes.rows[0].id}`);
     const docId = docRes.rows[0].id;
 
-    // Chunking Strategy (Simple: 1000 characters overlap 100)
+    // Chunking Strategy (Simple: 2000 characters overlap 200)
     const chunkSize = 2000;
     const overlap = 200;
 
     let start = 0;
     let chunkIndex = 0;
+    const chunks = [];
 
+    console.log('[Upload] Preparing chunks for batch insertion...');
     while (start < textContent.length) {
         const end = Math.min(start + chunkSize, textContent.length);
-        const chunk = textContent.slice(start, end);
-
-        await query(
-            'INSERT INTO document_chunks (document_id, chunk_index, content) VALUES ($1, $2, $3)',
-            [docId, chunkIndex, chunk]
-        );
+        const chunkText = textContent.slice(start, end);
+        chunks.push({ index: chunkIndex, content: chunkText });
 
         start += (chunkSize - overlap);
         chunkIndex++;
+    }
+
+    if (chunks.length > 0) {
+        // Batch Insert chunks into document_chunks
+        // Constructing a single multi-row INSERT statement:
+        // INSERT INTO table (col1, col2) VALUES ($1, $2, $3), ($4, $5, $6)...
+        const values: any[] = [];
+        const placeholders = chunks.map((c, i) => {
+            const base = i * 3;
+            values.push(docId, c.index, c.content);
+            return `($${base + 1}, $${base + 2}, $${base + 3})`;
+        }).join(', ');
+
+        const insertSql = `INSERT INTO document_chunks (document_id, chunk_index, content) VALUES ${placeholders}`;
+        await query(insertSql, values);
+        console.log(`[Upload] Batch inserted ${chunks.length} chunks.`);
     }
 
     return NextResponse.json({ success: true, documentId: docId, chunks: chunkIndex });

@@ -67,14 +67,19 @@ export default function WorkspaceDetail() {
                 method: 'POST',
                 body: formData,
             });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `Server Error (${res.status})`);
+            }
+
             const data = await res.json();
             if (data.success) {
                 fetchDocuments();
-            } else {
-                alert(data.error);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Upload failed:', error);
+            alert(`Upload failed: ${error.message}`);
         } finally {
             setUploading(false);
         }
@@ -96,16 +101,22 @@ export default function WorkspaceDetail() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ workspaceId, question: userMsg.content }),
             });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || `Server Error (${res.status})`);
+            }
+
             const data = await res.json();
 
             setMessages(prev => [...prev, {
                 role: 'assistant',
                 content: data.answer,
-                sources: data.sources // Backend returns sources as string array
+                sources: data.sources
             }]);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Chat failed:', error);
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error processing that request.' }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: `Sorry, I encountered an error: ${error.message}` }]);
         } finally {
             setIsThinking(false);
         }
