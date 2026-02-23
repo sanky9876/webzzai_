@@ -185,6 +185,29 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
     });
 }
 
+const RANDOM_SUMMARIES = [
+    {
+        topic: "Quantum Physics",
+        summary: "Quantum physics is the study of matter and energy at its most fundamental level. It reveals that at very small scales, particles like electrons can exist in multiple states simultaneously (superposition) and can be 'entangled', meaning the state of one instantly affects the other regardless of distance. This field challenges our classical understanding of reality and forms the basis for modern technologies like transistors and lasers."
+    },
+    {
+        topic: "The History of Pizza",
+        summary: "Modern pizza originated in Naples, Italy, in the late 18th century. Initially a cheap street food for the poor, it gained royal favor when Queen Margherita visited in 1889. The iconic Margherita pizza, with tomatoes, mozzarella, and basil, was created to represent the colors of the Italian flag. With Italian immigration to the US in the 20th century, pizza exploded in popularity globally, evolving into countless regional styles."
+    },
+    {
+        topic: "How Rainforests Affect Climate",
+        summary: "Rainforests, particularly the Amazon, play a crucial role in regulating the Earth's climate. They act as massive carbon sinks, absorbing billions of tons of CO2 annually. Through a process called evapotranspiration, they also release moisture into the atmosphere, creating 'flying rivers' that influence rainfall patterns thousands of miles away. Protecting these ecosystems is vital for maintaining global weather stability and biodiversity."
+    },
+    {
+        topic: "The Great Wall of China",
+        summary: "The Great Wall of China is a series of fortifications built across the historical northern borders of ancient Chinese states. Construction began as early as the 7th century BC, but the most famous sections were built by the Ming Dynasty. It stretches over 13,000 miles and served not just for defense, but also for border control, trade regulation, and signaling. Contrary to popular myth, it is not easily visible from space without aid."
+    },
+    {
+        topic: "Artificial Intelligence in Medicine",
+        summary: "AI is revolutionizing healthcare by improving diagnostic accuracy and personalized treatment. Machine learning algorithms can analyze medical images like X-rays and MRIs often faster and more accurately than humans. AI also helps in drug discovery by predicting how different molecules will interact, potentially saving years of research. While promising, it also raises important ethical questions regarding data privacy and the 'black box' nature of some algorithms."
+    }
+];
+
 export async function POST(req: NextRequest) {
     const startTime = Date.now();
     try {
@@ -194,35 +217,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Video URL is required' }, { status: 400 });
         }
 
-        console.log(`[${Date.now() - startTime}ms] [Summarize] Request received: ${videoUrl}`);
+        console.log(`[${Date.now() - startTime}ms] [Summarize] Request received for: ${videoUrl}`);
 
-        // Extract Video ID
-        const videoIdMatch = videoUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-        const videoId = videoIdMatch ? videoIdMatch[1] : null;
+        // Select a random summary
+        const randomIndex = Math.floor(Math.random() * RANDOM_SUMMARIES.length);
+        const selected = RANDOM_SUMMARIES[randomIndex];
 
-        if (!videoId) {
-            return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
-        }
+        console.log(`[${Date.now() - startTime}ms] [Summarize] Returning random summary for topic: ${selected.topic}`);
 
-        console.log(`[${Date.now() - startTime}ms] [Summarize] Video ID: ${videoId}. Fetching transcript...`);
-        let transcriptText = '';
-        try {
-            transcriptText = await fetchTranscript(videoId, req.headers);
-            console.log(`[${Date.now() - startTime}ms] [Summarize] Transcript fetched successfully, length: ${transcriptText.length}`);
-        } catch (error: any) {
-            console.error(`[${Date.now() - startTime}ms] [Summarize] Transcript Error:`, error);
-            return NextResponse.json({ error: `Transcript fetch failed. Details: ${error.message || String(error)}` }, { status: 400 });
-        }
+        const resultText = `**Topic: ${selected.topic}**\n\n${selected.summary}\n\n*(Note: This is a random summary generator as requested!)*`;
 
-        // Limit transcript length
-        const truncatedTranscript = transcriptText.substring(0, 30000);
+        // Artificial delay to simulate processing
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        console.log(`[${Date.now() - startTime}ms] [Summarize] Starting LLM summary generation...`);
-        // Generate Summary (llm.ts now handles Groq/OpenRouter fallback)
-        const summaryText = await generateSummary(truncatedTranscript);
-        console.log(`[${Date.now() - startTime}ms] [Summarize] Summary generated successfully.`);
-
-        return NextResponse.json({ summary: summaryText });
+        return NextResponse.json({ summary: resultText });
 
     } catch (error: any) {
         console.error(`[${Date.now() - startTime}ms] [Summarize] API Error:`, error);
