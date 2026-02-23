@@ -187,24 +187,66 @@ async function fetchTranscript(videoId: string, requestHeaders?: Headers): Promi
 
 const RANDOM_SUMMARIES = [
     {
-        topic: "Quantum Physics",
-        summary: "Quantum physics is the study of matter and energy at its most fundamental level. It reveals that at very small scales, particles like electrons can exist in multiple states simultaneously (superposition) and can be 'entangled', meaning the state of one instantly affects the other regardless of distance. This field challenges our classical understanding of reality and forms the basis for modern technologies like transistors and lasers."
+        topic: "Quantum Physics & The Nature of Reality",
+        summary: `Quantum physics is the study of matter and energy at its most fundamental level. It reveals that at very small scales, the universe operates on a set of rules that are vastly different from our daily experience.
+
+**Key Concepts:**
+1. **Superposition:** Particles like electrons can exist in multiple states or locations simultaneously until they are observed. This is famously illustrated by Schrödinger's Cat thought experiment.
+2. **Entanglement:** Two particles can become 'linked' such that the state of one instantly influences the other, even if they are separated by billions of light-years. Albert Einstein famously called this "spooky action at a distance."
+3. **Wave-Particle Duality:** Quantum entities exhibit properties of both particles (localized objects) and waves (oscillations that spread through space).
+4. **Uncertainty Principle:** Proposed by Werner Heisenberg, it states that we cannot simultaneously know both the exact position and exact momentum of a particle with absolute precision.
+
+**Impact on Technology:**
+This field challenges our classical understanding of reality and forms the basis for modern technologies like transistors (the building blocks of computers), lasers, MRI machines, and the emerging field of quantum computing, which promises to solve complex problems far beyond the reach of current supercomputers.`
     },
     {
-        topic: "The History of Pizza",
-        summary: "Modern pizza originated in Naples, Italy, in the late 18th century. Initially a cheap street food for the poor, it gained royal favor when Queen Margherita visited in 1889. The iconic Margherita pizza, with tomatoes, mozzarella, and basil, was created to represent the colors of the Italian flag. With Italian immigration to the US in the 20th century, pizza exploded in popularity globally, evolving into countless regional styles."
+        topic: "The Comprehensive History of Pizza",
+        summary: `Modern pizza, as we recognize it today, has a rich and complex history that spans centuries and continents. While flatbreads with toppings were consumed by ancient civilizations like the Greeks and Egyptians, the birthplace of the modern pizza is Naples, Italy.
+
+**The Evolution:**
+1. **Street Food Roots (1700s):** In the late 18th century, Naples was a thriving waterfront city. Pizza was a cheap, nutritious street food sold by informal vendors to the working poor (lazzaroni). It was initially dismissed by food writers as "disgusting."
+2. **Royal Approval (1889):** Legend has it that Queen Margherita of Savoy visited Naples and was bored with the gourmet French cuisine. She requested a variety of pizzas from Pizzeria Brandi. Her favorite was the one featuring tomatoes, mozzarella, and basil—matching the colors of the Italian flag. This became the world-famous Pizza Margherita.
+3. **The American Boom (1900s):** Italian immigrants brought pizza to the United States. Lombardi's, the first licensed pizzeria in New York, opened in 1905. However, pizza truly exploded in popularity after World War II, when returning soldiers who had tasted it in Italy began seeking it out at home.
+4. **Global Phenomenon:** Today, pizza is one of the most popular foods on Earth, evolving into countless regional styles—from the thin, crispy New York slice to the deep-dish Chicago pie, and from the sophisticated artisanal varieties in Japan to the unique breakfast pizzas found in Australia.`
     },
     {
-        topic: "How Rainforests Affect Climate",
-        summary: "Rainforests, particularly the Amazon, play a crucial role in regulating the Earth's climate. They act as massive carbon sinks, absorbing billions of tons of CO2 annually. Through a process called evapotranspiration, they also release moisture into the atmosphere, creating 'flying rivers' that influence rainfall patterns thousands of miles away. Protecting these ecosystems is vital for maintaining global weather stability and biodiversity."
+        topic: "Rainforests: The Lungs and Thermostats of Earth",
+        summary: `Rainforests, particularly the massive Amazon Basin, play a crucial and irreplaceable role in regulating the Earth's climate and supporting life. They are often called the "Lungs of the Planet," but they act just as much as a global thermostat.
+
+**Critical Functions:**
+1. **Carbon Sequestration:** Tropical rainforests are massive carbon sinks. Through photosynthesis, they absorb billions of tons of carbon dioxide annually, helping to mitigate the greenhouse effect and slow global warming.
+2. **The Water Cycle:** Rainforests are massive moisture pumps. Through a process called evapotranspiration, trees release water vapor into the atmosphere. This creates "flying rivers"—massive currents of moisture that influence rainfall patterns thousands of miles away, providing water for agriculture across entire continents.
+3. **Biodiversity Hotspots:** While covering only 6% of Earth's land surface, rainforests house more than half of the world's plant and animal species. This biodiversity is a treasure trove for potential medical breakthroughs, as many of our modern pharmaceuticals are derived from rainforest plants.
+4. **Global Cooling:** The dense canopy reflects sunlight and the constant evaporation of water creates clouds that further reflect solar radiation back into space, providing a cooling effect that is vital for maintaining global weather stability.
+
+**Threats and Conservation:**
+Deforestation for logging, mining, and cattle ranching remains a severe threat. Protecting these ecosystems is not just an environmental concern; it is a matter of global security and climate stability.`
     },
     {
-        topic: "The Great Wall of China",
-        summary: "The Great Wall of China is a series of fortifications built across the historical northern borders of ancient Chinese states. Construction began as early as the 7th century BC, but the most famous sections were built by the Ming Dynasty. It stretches over 13,000 miles and served not just for defense, but also for border control, trade regulation, and signaling. Contrary to popular myth, it is not easily visible from space without aid."
+        topic: "The Great Wall: More Than Just a Wall",
+        summary: `The Great Wall of China is one of the most impressive architectural feats in human history, stretching across the historical northern borders of ancient Chinese states and Imperial China. It is not a single continuous wall but a complex system of fortifications.
+
+**Construction and Purpose:**
+1. **Centuries of Labor:** Construction began as early as the 7th century BC. Various dynasties added to, connected, and rebuilt sections over 2,000 years. The most famous and well-preserved sections we see today were built by the Ming Dynasty (1368–1644).
+2. **Vast Dimensions:** The official length issued by China's State Administration of Cultural Heritage is 21,196 kilometers (over 13,000 miles). This includes actual walls, trenches, and natural defensive barriers like hills and rivers.
+3. **Multifunctional Defense:** It served as more than just a barrier. It was a sophisticated military system featuring watchtowers for surveillance, beacon towers for long-distance signaling using smoke and fire, and garrisons for troops.
+4. **Trade and Control:** The wall also helped regulate trade along the Silk Road, allowed for the collection of duties, and controlled the movement of people across the borders.
+
+**Historical Myths:**
+Contrary to the popular 20th-century myth, the Great Wall is generally not visible to the naked eye from the Moon, and it is difficult to see from low Earth orbit without specialized equipment or perfect conditions, as its materials often blend into the surrounding landscape.`
     },
     {
-        topic: "Artificial Intelligence in Medicine",
-        summary: "AI is revolutionizing healthcare by improving diagnostic accuracy and personalized treatment. Machine learning algorithms can analyze medical images like X-rays and MRIs often faster and more accurately than humans. AI also helps in drug discovery by predicting how different molecules will interact, potentially saving years of research. While promising, it also raises important ethical questions regarding data privacy and the 'black box' nature of some algorithms."
+        topic: "AI in Medicine: The Future of Healthcare",
+        summary: `Artificial Intelligence is no longer a futuristic concept in healthcare; it is actively revolutionizing how we diagnose, treat, and understand human health. From early detection to drug discovery, AI is enhancing the capabilities of medical professionals.
+
+**Key Applications:**
+1. **Medical Imaging & Diagnostics:** Machine learning algorithms, particularly deep learning, can analyze medical images (X-rays, MRIs, CT scans) with incredible speed. For certain conditions like skin cancer or diabetic retinopathy, AI has shown accuracy levels that rival or even exceed senior specialists.
+2. **Personalized Medicine:** AI can process vast amounts of genetic data, lifestyle factors, and medical history to suggest highly tailorable treatment plans for individual patients, moving away from a "one-size-fits-all" approach.
+3. **Drug Discovery:** Developing a new drug traditionally takes over a decade and billions of dollars. AI is slashing this time by predicting how different molecular structures will interact with targets in the body, identifying viable candidates in weeks rather than years.
+4. **Virtual Health Assistants:** AI-powered chatbots and monitors help patients manage chronic conditions, provide mental health support, and offer preliminary triage, reducing the burden on overstretched healthcare systems.
+
+**Ethical and Technical Challenges:**
+Despite its promise, the integration of AI faces hurdles. These include data privacy concerns, the "black box" problem (understanding *how* an AI reached a specific conclusion), and the potential for algorithmic bias if the data used to train the AI is not sufficiently diverse.`
     }
 ];
 
@@ -225,10 +267,10 @@ export async function POST(req: NextRequest) {
 
         console.log(`[${Date.now() - startTime}ms] [Summarize] Returning random summary for topic: ${selected.topic}`);
 
-        const resultText = `**Topic: ${selected.topic}**\n\n${selected.summary}\n\n*(Note: This is a random summary generator as requested!)*`;
+        const resultText = `### ${selected.topic}\n\n${selected.summary}\n\n---\n*(Note: This is a random summary generator as requested!)*`;
 
-        // Artificial delay to simulate processing
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Artificial delay to simulate processing (4.5 seconds)
+        await new Promise(resolve => setTimeout(resolve, 4500));
 
         return NextResponse.json({ summary: resultText });
 
