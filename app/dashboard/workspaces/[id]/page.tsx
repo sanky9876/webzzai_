@@ -47,8 +47,9 @@ export default function WorkspaceDetail() {
             if (data.documents) {
                 setDocuments(data.documents);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch docs:', error);
+            alert(`Failed to load documents: ${error.message}`);
         } finally {
             setLoadingDocs(false);
         }
