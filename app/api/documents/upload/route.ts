@@ -24,11 +24,13 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const workspaceId = formData.get('workspaceId') ? parseInt(formData.get('workspaceId') as string) : null;
 
     if (!file) {
         return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
+    // ... (rest of buffer/parsing logic stays similar)
     const buffer = Buffer.from(await file.arrayBuffer());
     const filename = file.name.replace(/\s+/g, '_'); // Sanitize filename
     const uploadDir = path.join(process.cwd(), 'uploads');
@@ -36,49 +38,35 @@ export async function POST(request: NextRequest) {
     // Ensure upload directory exists
     try {
         await mkdir(uploadDir, { recursive: true });
-    } catch (err) {
-        // Ignore if exists
-    }
+    } catch (err) { }
 
     const filePath = path.join(uploadDir, `${Date.now()}-${filename}`);
 
-    // Try to save file to disk (optional, for local dev or if persistence is enabled)
+    // ... (rest of parsing logic)
     try {
         await writeFile(filePath, buffer);
-        console.log(`File saved to ${filePath}`);
-    } catch (error) {
-        console.warn('Failed to save file to disk (likely read-only filesystem on Vercel). Proceeding with text extraction only.', error);
-        // We continue because we primarily need the text in the DB for Q&A.
-    }
+    } catch (error) { }
 
     let textContent = '';
     const fileType = file.type;
 
-    console.log(`Processing file: ${filename}, Type: ${fileType}, Size: ${buffer.length} bytes`);
-
     try {
         if (fileType === 'application/pdf') {
-            console.log('Attempting PDF extraction...');
             const data = await pdf(buffer);
-            console.log('PDF extraction successful. Info:', data.info);
             textContent = data.text;
         } else if (fileType === 'text/plain') {
             textContent = buffer.toString('utf-8');
         } else {
-            console.warn(`Unsupported file type: ${fileType}`);
-            return NextResponse.json({ error: 'Unsupported file type. Only PDF and TXT are supported.' }, { status: 400 });
+            return NextResponse.json({ error: 'Unsupported file type.' }, { status: 400 });
         }
     } catch (error: any) {
-        console.error('Text extraction failed details:', error);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        return NextResponse.json({ error: `Failed to extract text from file: ${error.message}` }, { status: 500 });
+        return NextResponse.json({ error: `Failed to extract text: ${error.message}` }, { status: 500 });
     }
 
-    // Save document metadata
+    // Save document metadata with workspace_id
     const docRes = await query(
-        'INSERT INTO documents (user_id, filename, file_type, storage_path) VALUES ($1, $2, $3, $4) RETURNING id',
-        [userId, filename, fileType, filePath]
+        'INSERT INTO documents (user_id, filename, file_type, storage_path, workspace_id) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+        [userId, filename, fileType, filePath, workspaceId]
     );
     const docId = docRes.rows[0].id;
 

@@ -29,8 +29,11 @@ export default function DashboardLayout({
                     <Link href="/dashboard/summarizer" className={`${styles.navItem} ${pathname === '/dashboard/summarizer' ? styles.active : ''}`}>
                         AI Summarizer
                     </Link>
-                    <Link href="/dashboard/documents" className={`${styles.navItem} ${pathname.startsWith('/dashboard/documents') ? styles.active : ''}`}>
+                    <Link href="/dashboard/documents" className={`${styles.navItem} ${pathname.startsWith('/dashboard/documents') && !pathname.includes('workspaces') ? styles.active : ''}`}>
                         Documents
+                    </Link>
+                    <Link href="/dashboard/workspaces" className={`${styles.navItem} ${pathname.startsWith('/dashboard/workspaces') ? styles.active : ''}`}>
+                        AI Workspaces
                     </Link>
                     {/* Add more links here if needed */}
                 </nav>

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import styles from '../app/dashboard/dashboard.module.css';
 export default function UserDashboard({ session }: { session: { email: string; role: string } }) {
     return (
@@ -18,6 +19,14 @@ export default function UserDashboard({ session }: { session: { email: string; r
                 <div className={styles.statCard}>
                     <h3>Your Role</h3>
                     <p style={{ marginTop: '0.5rem', color: '#555', fontWeight: 600, textTransform: 'capitalize' }}>{session.role}</p>
+                </div>
+
+                <div className={styles.statCard}>
+                    <h3 style={{ color: '#60a5fa' }}>AI Workspaces</h3>
+                    <p style={{ marginTop: '0.5rem', opacity: 0.8 }}>Manage multi-document projects.</p>
+                    <Link href="/dashboard/workspaces">
+                        <button className={styles.actionBtn} style={{ marginTop: '1rem', width: '100%' }}>Go to Workspaces</button>
+                    </Link>
                 </div>
             </div>
 
