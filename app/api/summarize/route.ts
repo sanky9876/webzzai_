@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
 
         console.log(`[${Date.now() - startTime}ms] [Summarize] Returning random summary for topic: ${selected.topic}`);
 
-        const resultText = `### ${selected.topic}\n\n${selected.summary}\n\n---\n*(Note: This is a random summary generator as requested!)*`;
+        const resultText = `### ${selected.topic}\n\n${selected.summary}`;
 
         // Artificial delay to simulate processing (10 seconds)
         await new Promise(resolve => setTimeout(resolve, 10000));
