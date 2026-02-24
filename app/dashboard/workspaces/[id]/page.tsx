@@ -41,8 +41,29 @@ export default function WorkspaceDetail() {
     }, [messages]);
 
     const fetchDocuments = async () => {
+        if (!workspaceId || workspaceId === 'undefined') {
+            console.warn('[WorkspaceDetail] Missing workspaceId, skipping fetch');
+            return;
+        }
+
         try {
             const res = await fetch(`/api/workspaces/${workspaceId}/documents`);
+
+            if (!res.ok) {
+                const contentType = res.headers.get('content-type');
+                let errorMsg = `Server Error (${res.status})`;
+
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await res.json();
+                    errorMsg = errorData.error || errorData.details || errorMsg;
+                } else {
+                    const text = await res.text();
+                    console.error('[WorkspaceDetail] Non-JSON error response:', text.slice(0, 200));
+                    errorMsg = `Server returned an error (${res.status}). Please check server logs.`;
+                }
+                throw new Error(errorMsg);
+            }
+
             const data = await res.json();
             if (data.documents) {
                 setDocuments(data.documents);

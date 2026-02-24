@@ -13,6 +13,7 @@ export async function GET(
     }
 
     const { id: workspaceId } = await params;
+    console.log(`[Workspace Docs List] Fetching for workspace: ${workspaceId}`);
 
     try {
         const res = await query(
