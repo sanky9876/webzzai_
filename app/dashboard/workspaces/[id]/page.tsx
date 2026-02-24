@@ -47,7 +47,7 @@ export default function WorkspaceDetail() {
         }
 
         try {
-            const res = await fetch(`/api/workspaces/${workspaceId}/documents`);
+            const res = await fetch(`/api/workspaces/docs?workspaceId=${workspaceId}`);
 
             if (!res.ok) {
                 const contentType = res.headers.get('content-type');
